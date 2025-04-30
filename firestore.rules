@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow everything for testing
+    match /{document=**} {
+      allow read, write: if true;
+    }
+
+    // 🔒 Example Production Rule:
+    // match /rooms/{roomId} {
+    //   allow read, write: if request.auth != null && request.auth.uid == resource.data.host;
+    // }
+
+  }
+}

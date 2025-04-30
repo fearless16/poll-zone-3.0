@@ -1,11 +1,20 @@
 import { initializeApp } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
-const firebaseConfig = {
+let firebaseConfig
+// if (process.env.NODE_ENV === 'test') {
+//   firebaseConfig = {
+//     projectId: 'vote-test', // 👈 Required for emulator!
+//     apiKey: 'fake-api-key', // 👈 Dummy data
+//     authDomain: 'localhost',
+//   }
+// }
+
+firebaseConfig = {
   apiKey: import.meta.env.VITE_REACT_APP_API_KEY,
   authDomain: import.meta.env.VITE_REACT_APP_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_REACT_APP_PROJECT_ID,
@@ -15,5 +24,11 @@ const firebaseConfig = {
 }
 
 // Initialize Firebase
-export const app = initializeApp(firebaseConfig)
-export const db = getFirestore()
+const app = initializeApp(firebaseConfig)
+const db = getFirestore(app)
+
+// if (process.env.NODE_ENV === 'test') {
+//   connectFirestoreEmulator(db, '127.0.0.1', 8088)
+// }
+
+export { db }
