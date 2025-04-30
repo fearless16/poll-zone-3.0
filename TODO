@@ -1,0 +1,5 @@
+- Remove race condition
+- Remove the re voting issue
+- Add BUN to this project and remove npm
+- Add proper comments in code
+- Fix style issues
