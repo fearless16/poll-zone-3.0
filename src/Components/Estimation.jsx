@@ -52,7 +52,8 @@ function Estimation() {
 
   async function setData(options) {
     try {
-      await addPoll(options)
+      const roomId = localStorage.getItem('roomId')
+      await addPoll(roomId, options)
     } catch (err) {
       dispatch({ type: FAILURE })
       navigate('/create')

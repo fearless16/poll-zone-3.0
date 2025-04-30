@@ -84,11 +84,10 @@ export const joinPoll = async (roomId, name) => {
 }
 
 /** Adds a new poll to an existing room */
-export const addPoll = async (options, question) => {
+export const addPoll = async (roomId, options, question, dbInstance = db) => {
   let response = {}
   let error = {}
-  const roomId = localStorage.getItem('roomId')
-  const docRef = doc(db, 'rooms', roomId)
+  const docRef = doc(dbInstance, 'rooms', roomId)
   const createdAt = new Date()
 
   const poll = {
@@ -112,10 +111,10 @@ export const addPoll = async (options, question) => {
 }
 
 /** Fetches data of a specific room */
-export const getRoomData = async (roomId) => {
+export const getRoomData = async (roomId, dbInstance = db) => {
   let response = {}
   let error = {}
-  const docRef = doc(db, 'rooms', roomId)
+  const docRef = doc(dbInstance, 'rooms', roomId)
 
   try {
     const docSnapshot = await getDoc(docRef)
@@ -152,9 +151,9 @@ export const isVoted = async () => {
 }
 
 /** Closes the poll by updating isOpen to false */
-export const closePoll = async (roomId) => {
+export const closePoll = async (roomId, dbInstance = db) => {
   try {
-    const docRef = doc(db, 'rooms', roomId)
+    const docRef = doc(dbInstance, 'rooms', roomId)
     await updateDoc(docRef, {
       'poll.isOpen': false,
     })
@@ -171,11 +170,10 @@ export const closePoll = async (roomId) => {
  * @param {string} userId - Voter ID
  * @param {string} userName - Voter name
  */
-export const castVote = async (roomId, optionIndex, userId, userName) => {
-  console.log(roomId, optionIndex, userId, userName)
-  const roomRef = doc(db, 'rooms', roomId)
+export const castVote = async (roomId, optionIndex, userId, userName, dbInstance = db) => {
+  const roomRef = doc(dbInstance, 'rooms', roomId)
 
-  await runTransaction(db, async (transaction) => {
+  await runTransaction(dbInstance, async (transaction) => {
     const roomDoc = await transaction.get(roomRef)
 
     if (!roomDoc.exists()) {

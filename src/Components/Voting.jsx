@@ -15,13 +15,6 @@ function Voting() {
   const { dispatch, pollState } = useRoomData()
   const navigate = useNavigate()
 
-  // const resetForm = () => {
-  //   const elements = formRef.current.elements
-  //   for (let i = 0, element; (element = elements[i++]); ) {
-  //     element.value = ''
-  //   }
-  // }
-
   const renderOptions = () => {
     const optionsArray = []
     let renders = 0
@@ -85,7 +78,8 @@ function Voting() {
 
   async function setData(options, question) {
     try {
-      return addPoll(options, question)
+      const roomId = localStorage.getItem('roomId')
+      return addPoll(roomId, options, question)
     } catch (err) {
       dispatch({ type: FAILURE })
       navigate('/create')
