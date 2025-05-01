@@ -148,15 +148,6 @@ h1 {
   position: relative;
 }
 
-.toast-container {
-  position: absolute;
-  margin: 0;
-  padding: 0;
-  left: 40%;
-  top: 7%;
-  animation: toast 1s linear;
-}
-
 .voting-form {
   max-width: 600px;
   max-height: 100vh;
@@ -208,6 +199,11 @@ footer{
   bottom:0%;
 }
 
+.room-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
 /* Safari */
 @-webkit-keyframes spin {
   0% {
@@ -253,3 +249,4 @@ footer{
     transform: translateY(55%)
   }
 }
+

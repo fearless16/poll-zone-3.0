@@ -11,9 +11,10 @@ function Charts({ chartData }) {
       title: 'Poll Result',
     },
   }
-
+  console.log('\n\n', chartData)
   const getVotes = () => {
     const { options } = chartData
+    console.log(chartData.options)
     const votes = options.map((option) => option.votes)
     return votes
   }

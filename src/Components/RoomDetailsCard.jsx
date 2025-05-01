@@ -12,19 +12,27 @@ function RoomDetailsCard({ room, isOpen, roomId }) {
 
   return (
     <>
-      <Card style={{ width: '20rem' , maxWidth: '20rem', padding: '.55rem',}} className="d-flex bg-danger text-light">
+      <Card className="p-3 w-100 w-sm-75 w-md-50 w-lg-25 bg-danger text-light">
         <Card.Title className="text-center"> Room Details</Card.Title>
-          <Card.Subtitle>Room name: <strong style={{fontSize:'1.1rem'}}>{room.roomName}</strong></Card.Subtitle>
-          <Card.Subtitle className="mt-1">RoomID: <strong style={{fontSize:'1.1rem'}}>{roomId}</strong></Card.Subtitle>
+        <Card.Body className="px-2">
+          <Card.Subtitle>
+            Room name: <strong className="room-value">{room.roomName}</strong>
+          </Card.Subtitle>
           <Card.Subtitle className="mt-1">
-            Total Room members: <strong style={{fontSize:'1.1rem'}}>{room.participants.length}</strong>
-            </Card.Subtitle>
+            RoomID: <strong className="room-value">{roomId}</strong>
+          </Card.Subtitle>
+          <Card.Subtitle className="mt-1">
+            Total Room members: <strong className="room-value">{room.participants.length}</strong>
+          </Card.Subtitle>
+          <Card.Subtitle className="mt-1">
+            Poll status: <strong className="room-value">{isOpen ? 'Active' : 'Closed'}</strong>
+          </Card.Subtitle>
+          {room.poll.type === 'estimation' && (
             <Card.Subtitle className="mt-1">
-              Poll status: <strong style={{fontSize:'1.1rem'}}>{isOpen ? 'Active' : 'Closed'}</strong>
+              Average: <strong>{getAverage(room.poll)}</strong>
             </Card.Subtitle>
-            {room.poll.type === 'estimation' && (
-              <Card.Subtitle className="mt-1">Average: <strong>{getAverage(room.poll)}</strong></Card.Subtitle>
-            )}
+          )}
+        </Card.Body>
       </Card>
     </>
   )

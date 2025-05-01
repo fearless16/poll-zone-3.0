@@ -18,7 +18,7 @@ describe('🔥 Voting Transaction', () => {
     await testEnv.cleanup()
   })
 
-  test('💥 should allow valid vote', async () => {
+  test('💥 should allow valid vote with atomic update', async () => {
     const ref = doc(db, 'rooms', roomId)
 
     await setDoc(ref, {
@@ -32,8 +32,7 @@ describe('🔥 Voting Transaction', () => {
       },
     })
 
-    // 👇 force write flush
-    await getDoc(ref)
+    await getDoc(ref) // Force write flush
 
     await castVote(roomId, 1, userId, displayName, db)
 
@@ -48,9 +47,9 @@ describe('🔥 Voting Transaction', () => {
     )
   })
 
-  test('❌ should reject double voting', async () => {
+  test('❌ should reject double voting attempt', async () => {
     await expect(
-      castVote(roomId, 1, userId, displayName, db) // ✅ db injected here too
+      castVote(roomId, 1, userId, displayName, db)
     ).rejects.toThrow('Already voted!')
   })
 })

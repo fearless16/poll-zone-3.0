@@ -8,9 +8,9 @@ describe('🧠 pollReducer logic', () => {
       poll: {
         isOpen: true,
         voted: [{ id: 'abc' }],
-        options: [{ option: '1', votes: 1 }]
+        options: [{ option: '1', votes: 1 }],
       },
-      host: 'abc'
+      host: 'abc',
     }
 
     const state = pollReducer({}, { type: SUCCESS, payload })
@@ -27,5 +27,10 @@ describe('🧠 pollReducer logic', () => {
   test('FAILURE sets error', () => {
     const state = pollReducer({}, { type: FAILURE })
     expect(state.error).toBe('Something went wrong')
+  })
+
+  test('should return default state when action is unknown', () => {
+    const state = pollReducer({ voted: false }, { type: 'UNKNOWN' })
+    expect(state.voted).toBe(false)
   })
 })

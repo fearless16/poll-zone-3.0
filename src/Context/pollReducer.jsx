@@ -10,36 +10,24 @@ const isVoted = ({ voted }, userId) => {
   if (!voted || !userId) {
     return false
   }
-  return voted.find((voter) => voter.id === userId) ? true : false
+  return voted.some((voter) => voter.id === userId)
 }
 
-const isPoll = (poll) => {
-  if (!poll) {
-    return false
-  }
+const isPoll = (poll) => !!poll && Object.keys(poll).length > 0
 
-  return Object.keys(poll).length !== 0
-}
-
-const isHost = ({ host }, userId) => {
-  if (!userId) return
-
-  return host === userId
-}
+const isHost = ({ host }, userId) => !!userId && host === userId
 
 export const pollReducer = (state, action) => {
   switch (action.type) {
     case SUCCESS:
-      if (!action.payload?.poll || Object.keys(action.payload.poll).length === 0) {
-        return state
-      }
       return {
         ...state,
+        loading: false,
         currentPollData: action.payload.poll,
         roomData: action.payload,
         error: '',
         isHost: isHost(action.payload, action.payload.userId),
-        isOpen: action.payload.poll.isOpen,
+        isOpen: !!action.payload.poll.isOpen,
         voted: isVoted(action.payload.poll, action.payload.userId),
         isPoll: isPoll(action.payload.poll),
       }
@@ -52,6 +40,7 @@ export const pollReducer = (state, action) => {
     case UNSET_LOADING:
       return { ...state, loading: false }
     case FAILURE:
+      console.log(state)
       return { ...state, loading: false, error: 'Something went wrong' }
     default:
       return state

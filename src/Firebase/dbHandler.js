@@ -7,6 +7,7 @@ import {
   doc,
   arrayUnion,
   runTransaction,
+  increment,
   Timestamp,
 } from 'firebase/firestore'
 import { v4 as uuidv4 } from 'uuid'
@@ -176,36 +177,24 @@ export const castVote = async (roomId, optionIndex, userId, userName, dbInstance
   await runTransaction(dbInstance, async (transaction) => {
     const roomDoc = await transaction.get(roomRef)
 
-    if (!roomDoc.exists()) {
-      throw new Error('Room does not exist!')
-    }
+    if (!roomDoc.exists()) throw new Error('Room does not exist!')
 
-    const roomData = roomDoc.data()
-    const poll = roomData.poll
+    const data = roomDoc.data()
+    const poll = data.poll
 
-    if (!poll || !poll.isOpen) {
-      throw new Error('Poll is closed or invalid!')
-    }
+    if (!poll || !poll.isOpen) throw new Error('Poll is closed or invalid!')
 
-    const voters = poll.voted?.map((voter) => voter.id || voter) || []
+    const hasVoted = (poll.voted || []).some((voter) => voter.id === userId)
+    if (hasVoted) throw new Error('Already voted!')
 
-    if (voters.includes(userId)) {
-      throw new Error('Already voted!')
-    }
-
-    const options = poll.options || []
-
-    if (optionIndex < 0 || optionIndex >= options.length) {
-      throw new Error('Invalid voting option selected!')
-    }
-
-    /** Increment vote count and update voter list */
+    const options = [...poll.options]
     options[optionIndex].votes = (options[optionIndex].votes || 0) + 1
     const updatedVoted = [...(poll.voted || []), { id: userId, name: userName }]
 
     transaction.update(roomRef, {
       'poll.options': options,
-      'poll.voted': updatedVoted,
+      'poll.voted': arrayUnion({ id: userId, name: userName })
     })
   })
 }
+
