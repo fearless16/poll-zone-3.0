@@ -13,10 +13,9 @@ import Toast from 'react-bootstrap/Toast'
 function ToastComponent({ show, setShow, roomId }) {
   const navigate = useNavigate()
 
-  // Called when toast is closed
   const toggleShow = () => {
     setShow(false)
-    navigate('/create') // Navigate to create screen for host
+    navigate('/create')
   }
 
   return (
@@ -26,7 +25,7 @@ function ToastComponent({ show, setShow, roomId }) {
     >
       <Toast show={show} onClose={toggleShow} animation>
         <Toast.Header>
-          <strong className="me-auto">Copy room-id</strong>
+          <strong className="me-auto">Copy Room ID</strong>
         </Toast.Header>
         <Toast.Body>{roomId}</Toast.Body>
       </Toast>

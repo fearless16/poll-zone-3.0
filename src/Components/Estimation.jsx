@@ -73,7 +73,7 @@ function Estimation() {
                   </Form.Group>
                 </Col>
                 <Col xs="auto">
-                  <Button type="submit" variant="primary" disabled={clicked}>
+                  <Button type="submit" variant="dark" disabled={clicked}>
                     {clicked ? 'Loading...' : 'Submit'}
                   </Button>
                 </Col>

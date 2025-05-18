@@ -50,7 +50,7 @@ function CreatePoll() {
                     width={120}
                     onlabel="Estimation"
                     offlabel="Voting"
-                    onstyle="secondary"
+                    onstyle="dark"
                     offstyle="info"
                     onChange={(checked) => (checked ? setPollType('est') : setPollType('vote'))}
                   />

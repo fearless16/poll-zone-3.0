@@ -110,7 +110,7 @@ function VotingForm({ pollState, dispatch }) {
             <Col xs={12}>
               <Button
                 type="submit"
-                variant="primary"
+                variant="dark"
                 disabled={clicked || !selected}
                 className="w-100 py-3 fs-5 rounded d-flex align-items-center justify-content-center"
               >

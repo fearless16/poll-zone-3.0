@@ -112,7 +112,7 @@ function Voting() {
                   </Button>
                 </Col>
                 <Col xs="auto">
-                  <Button variant="primary" type="submit" size="md" disabled={clicked}>
+                  <Button variant="dark" type="submit" size="md" disabled={clicked}>
                     {clicked ? 'Submitting...' : 'Submit'}
                   </Button>
                 </Col>
