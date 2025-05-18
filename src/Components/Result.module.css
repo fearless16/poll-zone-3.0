@@ -1,0 +1,49 @@
+/* ======================= */
+/* Responsive Result Page */
+/* ======================= */
+
+.resultWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 100%;
+  margin: auto;
+}
+
+.resultCardWrapper {
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.05);
+}
+
+.chartBox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 250px;
+  height: 100%;
+  width: 100%;
+}
+
+@media (max-width: 767.98px) {
+  .chartBox {
+    margin-bottom: 1rem;
+  }
+
+  .resultWrapper {
+    padding: 1rem;
+  }
+
+  .resultCardWrapper {
+    padding: 1rem;
+  }
+}
+
+/* Add spacing for rows that may wrap */
+.my-4.justify-content-center.g-3 {
+  gap: 1rem;
+  flex-wrap: wrap;
+}

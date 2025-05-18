@@ -1,14 +1,27 @@
+import { createContext, useContext, useEffect, useReducer, useState } from 'react'
 import { onSnapshot, doc } from 'firebase/firestore'
-import { useContext, createContext, useEffect, useReducer, useState } from 'react'
 import { db } from '../Firebase/config'
-import { SUCCESS, pollReducer } from './pollReducer'
+import { REDUCER_ACTIONS } from '../Utils/constants'
+import { pollReducer } from './pollReducer'
 
+/**
+ * RoomDataContext provides the current poll state and user/room identifiers.
+ */
 export const RoomDataContext = createContext()
 
-export const useRoomData = () => {
-  return useContext(RoomDataContext)
-}
+/**
+ * Custom hook to access RoomDataContext.
+ */
+export const useRoomData = () => useContext(RoomDataContext)
 
+/**
+ * RoomDataContextProvider sets up a real-time listener to the Firestore document
+ * representing the current room and updates the poll state accordingly.
+ *
+ * @param {Object} props - React props.
+ * @param {React.ReactNode} props.children - Child components.
+ * @returns {JSX.Element} The context provider component.
+ */
 export const RoomDataContextProvider = ({ children }) => {
   const [pollState, dispatch] = useReducer(pollReducer, {
     loading: true,
@@ -20,26 +33,34 @@ export const RoomDataContextProvider = ({ children }) => {
     voted: false,
     isPoll: false,
   })
-  const [roomId, setRoomId] = useState(() => '')
-  const [userId, setUserId] = useState(() => '')
+
+  const [roomId, setRoomId] = useState('')
+  const [userId, setUserId] = useState('')
 
   useEffect(() => {
     if (!roomId || !userId) return
 
-    const unsubscribe = onSnapshot(doc(db, 'rooms', roomId), (docSnapshot) => {
-      const data = docSnapshot.data()
-      if (!data || !data.poll || Object.keys(data.poll).length === 0) return
+    dispatch({ type: REDUCER_ACTIONS.LOADING })
 
-      const payload = {
-        ...data,
-        userId,
-        roomId,
+    const docRef = doc(db, 'rooms', roomId)
+
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (!docSnap.exists()) {
+        dispatch({ type: REDUCER_ACTIONS.FAILURE })
+        return
       }
 
-      if (!docSnapshot.metadata.hasPendingWrites) {
-        dispatch({ type: SUCCESS, payload })
-      } else {
-        console.log('⏳ Skipping optimistic write, waiting for server confirmation')
+      const data = docSnap.data()
+      if (!data?.poll) {
+        dispatch({ type: REDUCER_ACTIONS.FAILURE })
+        return
+      }
+
+      const payload = { ...data, userId, roomId }
+      dispatch({ type: REDUCER_ACTIONS.SUCCESS, payload })
+
+      if (docSnap.metadata.hasPendingWrites) {
+        console.warn('Local changes pending sync with server.')
       }
     })
 
@@ -47,9 +68,9 @@ export const RoomDataContextProvider = ({ children }) => {
   }, [roomId, userId])
 
   const value = {
-    roomId,
     pollState,
     dispatch,
+    roomId,
     setRoomId,
     userId,
     setUserId,

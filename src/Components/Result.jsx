@@ -1,4 +1,4 @@
-import { Button, Card } from 'react-bootstrap'
+import { Button, Container, Row, Col, Card, Badge, ListGroup } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import Charts from './Chart'
@@ -7,134 +7,160 @@ import Modals from './Modal'
 import Loader from './Loader'
 import SideBar from './SideBar'
 import RoomDetailsCard from './RoomDetailsCard'
-import Header from './Header'
-import Footer from './Footer'
 import NoPoll from './NoPoll'
 import { useRoomData } from '../Context/useRoomData'
-import { LOADING, UNSET_LOADING } from '../Context/pollReducer'
-import { Messages} from '../Utils/constants'
+import { REDUCER_ACTIONS } from '../Utils/constants'
+import { Messages } from '../Utils/constants'
+import styles from './Result.module.css'
 
 function Result() {
   const [submitted, setSubmitted] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const navigate = useNavigate()
-
-  const { pollState, roomId, userId, dispatch, setRoomId, setUserId} = useRoomData()
-  const handleClick = () => {
-    dispatch({ type: LOADING })
-    if (
-      pollState.currentPollData.voted.length <
-      pollState.roomData.participants.length
-    ) {
-      dispatch({ type: UNSET_LOADING })
-      setModalOpen(true)
-    }
-    if (
-      pollState.currentPollData.voted.length ===
-        pollState.roomData.participants.length ||
-      submitted
-    ) {
-      dispatch({ type: LOADING })
-      closePoll(roomId)
-        .then((res) => {
-          navigate('/create')
-          dispatch({ type: UNSET_LOADING })
-        })
-        .catch((err) => {
-          dispatch({ type: UNSET_LOADING })
-          setSubmitted(false)
-        })
-    }
-  }
+  const { pollState, roomId, userId, dispatch, setRoomId, setUserId } = useRoomData()
 
   useEffect(() => {
     if (!roomId || !userId) {
-      if (localStorage.getItem('roomId') && localStorage.getItem('id')) {
-        setRoomId(localStorage.getItem('roomId'))
-        setUserId(localStorage.getItem('id'))
+      const storedRoom = localStorage.getItem('roomId')
+      const storedUser = localStorage.getItem('id')
+      if (storedRoom && storedUser) {
+        setRoomId(storedRoom)
+        setUserId(storedUser)
       } else {
         navigate('/')
       }
     }
-    return () => {
-      dispatch({ type: UNSET_LOADING })
-    }
+    return () => dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
   }, [])
 
-  if ((!roomId || !userId) && !pollState.loading) {
-    return navigate('/')
+  useEffect(() => {
+    if ((!roomId || !userId) && !pollState.loading) navigate('/')
+  }, [roomId, userId, pollState.loading])
+
+  const handleClick = async () => {
+    dispatch({ type: REDUCER_ACTIONS.LOADING })
+    setSubmitted(true)
+    const totalVotes = pollState.currentPollData.voted.length
+    const totalUsers = pollState.roomData.participants.length
+    if (totalVotes < totalUsers) {
+      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
+      setSubmitted(false)
+      setModalOpen(true)
+      return
+    }
+    try {
+      await closePoll(roomId)
+      navigate('/create')
+    } catch {
+      setSubmitted(false)
+    } finally {
+      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
+    }
   }
 
   return (
-    <>
-      <Header />
+    <div className="page-wrapper">
       {(pollState.loading || submitted) && <Loader />}
-      {!pollState.loading && !pollState.isPoll && <NoPoll message = {Messages.NO_POLL_DATA_TO_SHOW}/>}
-      {!pollState.loading && pollState.isPoll && !submitted && (
-        <>
-          <div className="result-container mx-auto d-flex btn-container z-index">
-            {modalOpen && (
-              <Modals
-                setModalOpen={setModalOpen}
-                modalOpen={modalOpen}
-                setSubmitted={setSubmitted}
-                navigate={navigate}
-                roomId={roomId}
-              />
-            )}
-            <Card style={{ width: '100%', maxHeight: '700px' }}>
-              {pollState.currentPollData && (
-                <Card.Title className="text-center mt-2">Poll Statistics</Card.Title> 
-              )}
-              {pollState.currentPollData && (
-                <div className="chart d-flex justify-content-between mb-2 ">
-                  <Charts chartData={pollState.currentPollData} />
-                </div>
-              )}
-              <div className="mx-auto">
-                {pollState.isOpen && pollState.isHost && (
-                  <Button
-                    onClick={handleClick}
-                    disabled={submitted}
-                    style={{ cursor: 'pointer', marginTop: '-2rem' }}
-                    variant="danger"
-                  >
-                    New poll
-                  </Button>
-                )}
-                {pollState.isOpen && (
-                  <Button
-                    onClick={() => navigate('/poll')}
-                    style={{
-                      cursor: 'pointer',
-                      marginTop: '-2rem',
-                      marginLeft: '.5rem',
-                    }}
-                    variant="secondary"
-                  >
-                    Go to poll
-                  </Button>
-                )}
-                {!pollState.isOpen && <p>Poll has been closed</p>}
-                <div className="room-details">
-                  {pollState.roomData && (
-                    <RoomDetailsCard
-                      room={pollState.roomData}
-                      roomId={roomId}
-                      isOpen={pollState.currentPollData.isOpen}
-                    />
-                  )}
-                </div>
-              </div>
-            </Card>
-            {pollState.currentPollData && (
-              <SideBar voted={pollState.currentPollData.voted} />
-            )}
-          </div>
-        </>
+
+      {!pollState.loading && !pollState.isPoll && (
+        <NoPoll message={Messages.NO_POLL_DATA_TO_SHOW} />
       )}
-      <Footer />
-    </>
+
+      {!pollState.loading && pollState.isPoll && !submitted && (
+        <main className={styles.resultWrapper}>
+          {modalOpen && (
+            <Modals
+              setModalOpen={setModalOpen}
+              modalOpen={modalOpen}
+              setSubmitted={setSubmitted}
+              navigate={navigate}
+              roomId={roomId}
+            />
+          )}
+
+          <RoomDetailsCard room={pollState.roomData} isOpen={pollState.currentPollData.isOpen} />
+
+          <Card className={styles.resultCardWrapper}>
+            <Container fluid>
+              <Row className="g-3">
+                <Col xs={12} md={9}>
+                  <Row className="g-3">
+                    <Col xs={12} md={7}>
+                      <div className={styles.chartBox}>
+                        <Charts chartData={pollState.currentPollData} />
+                      </div>
+                    </Col>
+
+                    <Col xs={12} md={5}>
+                      <Card>
+                        <Card.Header className="fw-semibold text-center">Votes</Card.Header>
+                        <Card.Body>
+                          <ListGroup variant="flush">
+                            {pollState.currentPollData.options.map((opt, idx) => (
+                              <ListGroup.Item key={idx} className="d-flex justify-content-between">
+                                <span>{opt.option}</span>
+                                <Badge
+                                  bg="dark"
+                                  style={{
+                                    fontSize: '1rem',
+                                    borderRadius: '1.5rem',
+                                    width: '3rem',
+                                  }}
+                                >
+                                  {opt.votes}
+                                </Badge>
+                              </ListGroup.Item>
+                            ))}
+                          </ListGroup>
+                        </Card.Body>
+                      </Card>
+                    </Col>
+
+                    <Row className="my-4 justify-content-center g-3">
+                      {pollState.isOpen && pollState.isHost && (
+                        <Col xs="auto">
+                          <Button onClick={handleClick} disabled={submitted} variant="danger">
+                            {submitted ? (
+                              <>
+                                <span
+                                  className="spinner-border spinner-border-sm me-2"
+                                  role="status"
+                                  aria-hidden="true"
+                                />
+                                Poll is closing...
+                              </>
+                            ) : (
+                              'New poll'
+                            )}
+                          </Button>
+                        </Col>
+                      )}
+                      {pollState.isOpen && (
+                        <Col xs="auto">
+                          <Button onClick={() => navigate('/poll')} variant="secondary">
+                            Go to poll
+                          </Button>
+                        </Col>
+                      )}
+                    </Row>
+
+                    {!pollState.isOpen && (
+                      <Row>
+                        <Col className="text-center text-muted">Poll has been closed</Col>
+                      </Row>
+                    )}
+                  </Row>
+                </Col>
+
+                <Col xs={12} md={3}>
+                  <SideBar voted={pollState.currentPollData.voted} />
+                </Col>
+              </Row>
+            </Container>
+          </Card>
+        </main>
+      )}
+    </div>
   )
 }
 

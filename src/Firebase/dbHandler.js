@@ -1,22 +1,24 @@
-import { db } from './config'
 import {
-  addDoc,
   collection,
-  updateDoc,
-  getDoc,
+  addDoc,
   doc,
+  getDoc,
+  updateDoc,
   arrayUnion,
   runTransaction,
   Timestamp,
 } from 'firebase/firestore'
+import { db } from './config'
 import { v4 as uuidv4 } from 'uuid'
 
-/** Creates a new room with host info and default poll state */
+/**
+ * Creates a new room in Firestore with host info
+ * @param {string} name - Display name of host
+ * @param {string} roomName - Custom room name
+ * @returns {Promise<{ response?: object, error?: object }>}
+ */
 export const createRoom = async (name, roomName) => {
   const hostId = uuidv4()
-  let response = {}
-  let error = {}
-
   localStorage.setItem('id', hostId)
   localStorage.setItem('displayName', name)
 
@@ -28,184 +30,182 @@ export const createRoom = async (name, roomName) => {
     poll: {},
   }
 
-  const collectionRef = collection(db, 'rooms')
   try {
-    const res = await addDoc(collectionRef, roomDetails)
+    const res = await addDoc(collection(db, 'rooms'), roomDetails)
     const roomId = res.id
     localStorage.setItem('roomId', roomId)
-    error = undefined
-    response = { success: true, roomId }
-  } catch (err) {
-    error = { ...err }
-    response = undefined
-    throw err
-  }
-  return { response, error }
-}
-
-/** Adds a user to an existing poll room */
-export const joinPoll = async (roomId, name) => {
-  const id = localStorage.getItem('id')
-  let response = {}
-  let error = {}
-  try {
-    const docRef = doc(db, 'rooms', roomId.trim())
-    const dataSnapshot = await getDoc(docRef)
-
-    if (!dataSnapshot.data()) {
-      return { response: undefined, error: 'Room does not exist' }
-    }
-
-    /** Case: user already exists */
-    if (id) {
-      const { participants } = dataSnapshot.data()
-      const existingUser = participants.find((participant) => participant.id === id)
-      if (existingUser) {
-        response = { success: true, data: 'Already a room member' }
-        return { response, error }
-      }
-    }
-
-    /** New user joining the room */
-    const userId = uuidv4()
-    localStorage.setItem('id', userId)
-    localStorage.setItem('displayName', name)
-    await updateDoc(docRef, { participants: arrayUnion({ id: userId, name }) })
-    localStorage.setItem('roomId', roomId)
-
-    response = { success: true, data: 'user registered successfully' }
-    error = undefined
-    return { response, error }
-  } catch (err) {
-    response = undefined
-    error = { ...err }
-    return { response, error }
-  }
-}
-
-/** Adds a new poll to an existing room */
-export const addPoll = async (roomId, options, question, dbInstance = db) => {
-  let response = {}
-  let error = {}
-  const docRef = doc(dbInstance, 'rooms', roomId)
-  const createdAt = new Date()
-
-  const poll = {
-    type: question ? 'voting' : 'estimation',
-    question: question || '',
-    options: options,
-    createdAt: createdAt,
-    voted: [],
-    isOpen: true,
-  }
-
-  try {
-    await updateDoc(docRef, { poll: poll })
-    response = { success: true }
-    return { response, error: undefined }
-  } catch (err) {
-    response = undefined
-    error = { ...err }
-    throw error
-  }
-}
-
-/** Fetches data of a specific room */
-export const getRoomData = async (roomId, dbInstance = db) => {
-  let response = {}
-  let error = {}
-  const docRef = doc(dbInstance, 'rooms', roomId)
-
-  try {
-    const docSnapshot = await getDoc(docRef)
-    if (!docSnapshot || !docSnapshot.data()) {
-      response = { success: true, data: 'not available' }
-      return { response, error: undefined }
-    }
-    response = { success: true, data: docSnapshot.data() }
-    error = undefined
-    return { response, error }
+    return { response: { success: true, roomId } }
   } catch (error) {
-    response = undefined
-    throw error
-  }
-}
-
-/** Checks whether the current user has already voted */
-export const isVoted = async () => {
-  const roomId = localStorage.getItem('roomId')
-  const userId = localStorage.getItem('id')
-  try {
-    const docRef = doc(db, 'rooms', roomId)
-    const dataSnapshot = await getDoc(docRef)
-    const { participants, poll } = dataSnapshot.data()
-
-    if (!participants.find((participant) => participant.id === userId)) {
-      throw new Error('Invalid user')
-    }
-
-    return Array.isArray(poll.voted) && poll.voted.some((v) => v.id === userId)
-  } catch (err) {
-    throw err
-  }
-}
-
-/** Closes the poll by updating isOpen to false */
-export const closePoll = async (roomId, dbInstance = db) => {
-  try {
-    const docRef = doc(dbInstance, 'rooms', roomId)
-    await updateDoc(docRef, {
-      'poll.isOpen': false,
-    })
-    return { data: 'success', error: undefined }
-  } catch (err) {
-    throw err
+    return { error }
   }
 }
 
 /**
- * Cast a vote using Firestore transaction to ensure consistency
- * @param {string} roomId - Room document ID
- * @param {number} optionIndex - Index of selected option
- * @param {string} userId - Voter ID
- * @param {string} userName - Voter name
+ * Joins a user into an existing room
+ * @param {string} roomId
+ * @param {string} name - User's display name
+ * @returns {Promise<{ response?: object, error?: object }>}
  */
-export const castVote = async (roomId, optionIndex, userId, userName, dbInstance = db) => {
-  const roomRef = doc(dbInstance, 'rooms', roomId)
+export const joinPoll = async (roomId, name) => {
+  const id = localStorage.getItem('id')
+  const docRef = doc(db, 'rooms', roomId.trim())
 
-  await runTransaction(dbInstance, async (transaction) => {
-    const roomDoc = await transaction.get(roomRef)
+  try {
+    const snap = await getDoc(docRef)
+    if (!snap.exists()) return { error: 'Room does not exist' }
 
-    if (!roomDoc.exists()) {
-      throw new Error('Room does not exist!')
+    const data = snap.data()
+    if (id && data.participants.some((p) => p.id === id)) {
+      return { response: { success: true, data: 'Already a room member' } }
     }
 
-    const roomData = roomDoc.data()
-    const poll = roomData.poll
+    const userId = uuidv4()
+    localStorage.setItem('id', userId)
+    localStorage.setItem('displayName', name)
+    await updateDoc(docRef, {
+      participants: arrayUnion({ id: userId, name }),
+    })
+    localStorage.setItem('roomId', roomId)
+    return { response: { success: true, data: 'User registered successfully' } }
+  } catch (error) {
+    return { error }
+  }
+}
 
-    if (!poll || !poll.isOpen) {
-      throw new Error('Poll is closed or invalid!')
+/**
+ * Adds a poll to an existing room
+ * @param {string} roomId
+ * @param {Array} options - Poll options
+ * @param {string} [question] - Poll question (optional)
+ * @returns {Promise<{ response?: object, error?: object }>}
+ */
+export const addPoll = async (roomId, options, question = '') => {
+  const docRef = doc(db, 'rooms', roomId)
+  const poll = {
+    type: question ? 'voting' : 'estimation',
+    question,
+    options,
+    createdAt: Timestamp.now(),
+    voted: [],
+    isOpen: true,
+  }
+  try {
+    await updateDoc(docRef, { poll })
+    return { response: { success: true } }
+  } catch (error) {
+    return { error }
+  }
+}
+
+/**
+ * Retrieves data for a specific room from Firestore.
+ *
+ * @param {string} roomId - The ID of the room to fetch data for.
+ * @throws Will throw an error if the Firestore instance is not provided.
+ * @returns {Promise<Object>} An object containing the response status and room data if successful,
+ *                            or an error if the room is not found or the data is empty.
+ */
+export const getRoomData = async (roomId) => {
+  if (!db) throw new Error('Firestore instance is required')
+
+  try {
+    const snap = await getDoc(doc(db, 'rooms', roomId))
+
+    if (!snap.exists()) {
+      return {
+        response: { success: false },
+        error: new Error('Room not found'),
+      }
     }
 
-    const voters = poll.voted?.map((voter) => voter.id || voter) || []
-
-    if (voters.includes(userId)) {
-      throw new Error('Already voted!')
+    const data = snap.data()
+    if (!data || Object.keys(data).length === 0) {
+      return {
+        response: { success: false },
+        error: new Error('Empty room data'),
+      }
     }
 
-    const options = poll.options || []
-
-    if (optionIndex < 0 || optionIndex >= options.length) {
-      throw new Error('Invalid voting option selected!')
+    return {
+      response: { success: true, data },
     }
+  } catch (error) {
+    return { error }
+  }
+}
 
-    /** Increment vote count and update voter list */
-    options[optionIndex].votes = (options[optionIndex].votes || 0) + 1
-    const updatedVoted = [...(poll.voted || []), { id: userId, name: userName }]
+/**
+ * Checks if current user already voted
+ * @returns {Promise<boolean>}
+ */
+export const isVoted = async () => {
+  const roomId = localStorage.getItem('roomId')
+  const userId = localStorage.getItem('id')
+  const snap = await getDoc(doc(db, 'rooms', roomId))
+  const data = snap.data()
+
+  return data?.poll?.voted?.some((v) => v.id === userId) || false
+}
+
+/**
+ * Closes an open poll in a specified room within the Firestore database.
+ *
+ * @param {string} roomId - The unique identifier of the room containing the poll.
+ * @throws {Error} Throws an error if the roomId or db is not provided,
+ *                 if the room does not exist, or if the poll is missing or malformed.
+ * @returns {Promise<void>} Resolves when the poll is successfully closed.
+ */
+export const closePoll = async (roomId) => {
+  if (!roomId) throw new Error('Room ID is required')
+  if (!db) throw new Error('Firestore instance (db) is required')
+
+  const ref = doc(db, 'rooms', roomId)
+  const snap = await getDoc(ref)
+
+  if (!snap.exists()) {
+    throw new Error('Room does not exist')
+  }
+  const room = snap.data()
+
+  if (!room.poll || typeof room.poll !== 'object') {
+    throw new Error('Poll is missing or malformed')
+  }
+  if (!room.poll.isOpen) return
+
+  await updateDoc(ref, { 'poll.isOpen': false })
+}
+
+/**
+ * Safely casts a vote using Firestore transaction
+ * @param {string} roomId
+ * @param {number} optionIndex
+ * @param {string} userId
+ * @param {string} userName
+ * @returns {Promise<void>}
+ */
+export const castVote = async (roomId, optionIndex, userId, userName) => {
+  const roomRef = doc(db, 'rooms', roomId)
+
+  await runTransaction(db, async (transaction) => {
+    const roomSnap = await transaction.get(roomRef)
+    if (!roomSnap.exists()) throw new Error('Room does not exist')
+
+    const data = roomSnap.data()
+    const poll = data.poll
+    if (!poll?.isOpen) throw new Error('Poll is closed')
+
+    const alreadyVoted = poll.voted.some((v) => v.id === userId)
+    if (alreadyVoted) throw new Error('Already voted')
+
+    const updatedOptions = [...poll.options]
+    updatedOptions[optionIndex].votes += 1
+
+    const updatedVoted = [...poll.voted, { id: userId, name: userName }]
 
     transaction.update(roomRef, {
-      'poll.options': options,
+      'poll.options': updatedOptions,
       'poll.voted': updatedVoted,
+      'poll.lastUpdated': Timestamp.now(),
     })
   })
 }

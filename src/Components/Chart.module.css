@@ -1,0 +1,9 @@
+.chartBox {
+  aspect-ratio: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: clamp(15rem, 50vw, 30rem);
+  padding: 1.5rem;
+  margin-right: 0.5rem;
+}

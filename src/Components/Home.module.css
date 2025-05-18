@@ -1,0 +1,30 @@
+.homeWrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
+}
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 80%;
+  max-width: 70rem;
+}
+
+@media (min-width: 768px) {
+  .formContainer {
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+  }
+}
+
+.formCard {
+  flex: 1;
+  min-width: 20rem;
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+}

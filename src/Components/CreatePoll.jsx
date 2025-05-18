@@ -5,61 +5,63 @@ import Loader from './Loader'
 import { useRoomData } from '../Context/useRoomData'
 import { useNavigate } from 'react-router-dom'
 import BootstrapSwitchButton from 'bootstrap-switch-button-react'
-import Header from './Header'
-import Footer from './Footer'
 import NoPoll from './NoPoll'
 import { Messages } from '../Utils/constants'
-// import Timer from './Timer'
+import { REDUCER_ACTIONS } from '../Utils/constants'
+import { Container, Row, Col, Card } from 'react-bootstrap'
 
 function CreatePoll() {
   const [pollType, setPollType] = useState('est')
-  const { pollState, roomId, setRoomId, userId, setUserId } = useRoomData()
+  const { pollState, roomId, setRoomId, userId, setUserId, dispatch } = useRoomData()
   const navigate = useNavigate()
 
   useEffect(() => {
     if (!roomId || !userId) {
-      if (localStorage.getItem('roomId') && localStorage.getItem('id')) {
-        setRoomId(localStorage.getItem('roomId'))
-        setUserId(localStorage.getItem('id'))
+      const storedRoom = localStorage.getItem('roomId')
+      const storedUser = localStorage.getItem('id')
+      if (storedRoom && storedUser) {
+        setRoomId(storedRoom)
+        setUserId(storedUser)
       } else {
         navigate('/')
       }
     }
+    return () => {
+      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
+    }
   }, [])
 
-  if ((!roomId || !userId) && !pollState.loading) {
-    return navigate('/')
-  }
+  if ((!roomId || !userId) && !pollState.loading) navigate('/')
 
   return (
-    <>
-      <Header />
+    <div className="page">
       {pollState.loading && <Loader />}
+
       {!pollState.loading && !pollState.isHost && <NoPoll message={Messages.NOT_HOST} />}
+
       {!pollState.loading && pollState.isHost && (
-        <>
-            <div className="mx-auto" style={{ width: '50%' }}>
-              <>
-                <div className="mb-4">
+        <Container className="mt-5">
+          <Row className="justify-content-center">
+            <Col xs={12} md={8} lg={6}>
+              <Card className="p-4 shadow-lg p-3 mb-5 bg-white rounded bounceIn">
+                <div className="d-flex justify-content-center mb-4">
                   <BootstrapSwitchButton
-                    checked={true}
-                    width={110}
+                    checked={pollType === 'est'}
+                    width={120}
                     onlabel="Estimation"
                     offlabel="Voting"
                     onstyle="secondary"
                     offstyle="info"
-                    onChange={(checked) =>
-                      checked ? setPollType('est') : setPollType('vote')
-                    }
+                    onChange={(checked) => (checked ? setPollType('est') : setPollType('vote'))}
                   />
                 </div>
                 {pollType === 'est' ? <Estimation /> : <Voting />}
-              </>
-            </div>
-        </>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
       )}
-      <Footer />
-    </>
+    </div>
   )
 }
 
