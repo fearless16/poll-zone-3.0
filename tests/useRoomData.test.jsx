@@ -1,12 +1,12 @@
-
-import { render, waitFor, act } from '@testing-library/react'
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
-import { RoomDataContextProvider, useRoomData } from '../../src/Context/useRoomData'
+import React from 'react'
+import { render, waitFor, cleanup } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { RoomDataContextProvider, useRoomData } from '../src/Context/useRoomData'
 import { onSnapshot } from 'firebase/firestore'
+import { useEffect } from 'react'
 
-// 🔧 Mocks
-vi.mock('firebase/firestore', async () => {
-  const actual = await vi.importActual('firebase/firestore')
+vi.mock('firebase/firestore', async (importOriginal) => {
+  const actual = await importOriginal()
   return {
     ...actual,
     onSnapshot: vi.fn(),
@@ -14,128 +14,168 @@ vi.mock('firebase/firestore', async () => {
   }
 })
 
-// 🧪 Consumer Test Component
-function TestComponent() {
+function TestComponent({ skipSet = false }) {
   const { pollState, setRoomId, setUserId } = useRoomData()
 
   useEffect(() => {
-    setRoomId('room-123')
-    setUserId('user-456')
-  }, [])
+    if (!skipSet) {
+      setRoomId('room-1')
+      setUserId('user-1')
+    }
+  }, [skipSet, setRoomId, setUserId])
 
-  return <div>{pollState?.currentPollData?.question || 'No Question'}</div>
+  return <div data-testid="question">{pollState.currentPollData?.question || ''}</div>
 }
 
-describe('🧠 useRoomData — Full Test Suite', () => {
+describe('useRoomData hook', () => {
   let unsubMock
+  let warnSpy
 
   beforeEach(() => {
     unsubMock = vi.fn()
-    vi.useFakeTimers()
-
-    onSnapshot.mockImplementation((_ref, cb) => {
-      // Simulate valid doc data
-      cb({
-        exists: () => true,
-        data: () => ({
-          poll: {
-            question: 'Is this working?',
-            options: [{ option: 'Yes', votes: 1 }],
-            voted: [],
-            isOpen: true,
-          },
-          participants: [{ id: 'user-456' }],
-          host: 'user-456'
-        }),
-        metadata: { hasPendingWrites: false }
-      })
-      return unsubMock
-    })
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    cleanup()
   })
 
   afterEach(() => {
-    vi.runOnlyPendingTimers()
-    vi.useRealTimers()
     vi.clearAllMocks()
+    cleanup()
   })
 
-  test('✅ dispatches SUCCESS on valid snapshot without pendingWrites', async () => {
-    const { getByText } = render(
+  it('does not subscribe if roomId/userId not set', () => {
+    render(
       <RoomDataContextProvider>
-        <TestComponent />
+        <TestComponent skipSet />
       </RoomDataContextProvider>
     )
-
-    await waitFor(() => {
-      expect(getByText('Is this working?')).toBeDefined()
-    })
-
-    expect(onSnapshot).toHaveBeenCalledTimes(1)
-    expect(unsubMock).not.toHaveBeenCalled()
+    expect(onSnapshot).not.toHaveBeenCalled()
   })
 
-  test('🕒 uses fallback dispatch when hasPendingWrites is stuck', async () => {
-    onSnapshot.mockImplementation((_ref, cb) => {
+  it('dispatches FAILURE if poll is null despite document existing', async () => {
+    onSnapshot.mockImplementation((_, cb) => {
       cb({
         exists: () => true,
         data: () => ({
-          poll: {
-            question: 'Fallback test',
-            options: [{ option: 'A', votes: 0 }],
-            voted: [],
-            isOpen: true,
-          },
+          poll: null,
+          host: 'user-1',
           participants: [],
-          host: 'user-456'
         }),
-        metadata: { hasPendingWrites: true }
+        metadata: { hasPendingWrites: false },
       })
       return unsubMock
     })
 
-    const { getByText } = render(
-      <RoomDataContextProvider>
-        <TestComponent />
-      </RoomDataContextProvider>
-    )
-
-    // Advance fake timer to trigger fallback
-    await act(() => {
-      vi.advanceTimersByTime(3100)
-    })
-
-    expect(getByText('Fallback test')).toBeDefined()
-  })
-
-  test('🚫 dispatches FAILURE if doc does not exist or poll missing', async () => {
-    onSnapshot.mockImplementation((_ref, cb) => {
-      cb({
-        exists: () => false,
-        data: () => null,
-        metadata: { hasPendingWrites: false }
-      })
-      return unsubMock
-    })
-
-    const { getByText } = render(
+    const { getByTestId } = render(
       <RoomDataContextProvider>
         <TestComponent />
       </RoomDataContextProvider>
     )
 
     await waitFor(() => {
-      expect(getByText('No Question')).toBeDefined()
+      expect(getByTestId('question').textContent).toBe('')
     })
   })
 
-  test('🧹 unsubscribes and clears timeout on unmount', () => {
+  it('dispatches FAILURE when document does not exist', async () => {
+    onSnapshot.mockImplementation((_, cb) => {
+      cb({ exists: () => false })
+      return unsubMock
+    })
+
+    const { getByTestId } = render(
+      <RoomDataContextProvider>
+        <TestComponent />
+      </RoomDataContextProvider>
+    )
+
+    await waitFor(() => {
+      expect(getByTestId('question').textContent).toBe('')
+    })
+  })
+
+  it('dispatches FAILURE when poll field is missing', async () => {
+    onSnapshot.mockImplementation((_, cb) => {
+      cb({
+        exists: () => true,
+        data: () => ({}),
+        metadata: { hasPendingWrites: false },
+      })
+      return unsubMock
+    })
+
+    const { getByTestId } = render(
+      <RoomDataContextProvider>
+        <TestComponent />
+      </RoomDataContextProvider>
+    )
+
+    await waitFor(() => {
+      expect(getByTestId('question').textContent).toBe('')
+    })
+  })
+
+  it('dispatches SUCCESS when poll present and no pendingWrites', async () => {
+    onSnapshot.mockImplementation((_, cb) => {
+      cb({
+        exists: () => true,
+        data: () => ({
+          poll: { question: 'Q1', options: [], voted: [], isOpen: true },
+          participants: [],
+          host: 'user-1',
+        }),
+        metadata: { hasPendingWrites: false },
+      })
+      return unsubMock
+    })
+
+    const { getByTestId } = render(
+      <RoomDataContextProvider>
+        <TestComponent />
+      </RoomDataContextProvider>
+    )
+
+    await waitFor(() => {
+      expect(getByTestId('question').textContent).toBe('Q1')
+    })
+    expect(onSnapshot).toHaveBeenCalledTimes(1)
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+
+  it('dispatches SUCCESS and warns when hasPendingWrites is true', async () => {
+    onSnapshot.mockImplementation((_, cb) => {
+      cb({
+        exists: () => true,
+        data: () => ({
+          poll: { question: 'Q2', options: [], voted: [], isOpen: true },
+          participants: [],
+          host: 'user-1',
+        }),
+        metadata: { hasPendingWrites: true },
+      })
+      return unsubMock
+    })
+
+    const { getByTestId } = render(
+      <RoomDataContextProvider>
+        <TestComponent />
+      </RoomDataContextProvider>
+    )
+
+    await waitFor(() => {
+      expect(getByTestId('question').textContent).toBe('Q2')
+    })
+    expect(warnSpy).toHaveBeenCalledWith('Local changes pending sync with server.')
+  })
+
+  it('cleans up the listener on unmount', () => {
+    onSnapshot.mockReturnValue(unsubMock)
+
     const { unmount } = render(
       <RoomDataContextProvider>
         <TestComponent />
       </RoomDataContextProvider>
     )
-
     unmount()
-    expect(unsubMock).toHaveBeenCalledTimes(1)
+    expect(unsubMock).toHaveBeenCalled()
   })
 })

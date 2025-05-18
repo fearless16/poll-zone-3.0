@@ -1,8 +1,8 @@
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js'
 import { Doughnut } from 'react-chartjs-2'
-import { ListGroup, Badge} from 'react-bootstrap'
+import styles from './Chart.module.css'
 
-ChartJS.register(ArcElement, Tooltip, Legend)
+ChartJS.register(ArcElement, Tooltip, Legend, Title)
 
 function Charts({ chartData }) {
   const options = {
@@ -11,28 +11,13 @@ function Charts({ chartData }) {
       title: 'Poll Result',
     },
   }
-  console.log('\n\n', chartData)
-  const getVotes = () => {
-    const { options } = chartData
-    console.log(chartData.options)
-    const votes = options.map((option) => option.votes)
-    return votes
-  }
-
-  const getLabels = () => {
-    const { options } = chartData
-    const option = options.map((option) => option.option)
-    return option
-  }
-  const votes = getVotes()
-  const labels = getLabels()
   const data = {
-    labels: labels,
+    labels: chartData.options.map((o) => o.option),
     datasets: [
       {
         id: 1,
-        label: 'Poll result',
-        data: votes,
+        label: 'Poll Result',
+        data: chartData.options.map((o) => o.votes),
         backgroundColor: [
           'rgba(255, 99, 132, 0.9)',
           'rgba(54, 162, 235, 0.7)',
@@ -58,30 +43,11 @@ function Charts({ chartData }) {
       },
     ],
   }
+
   return (
-    <>
-      <div className="chart-container p-4 z-index">
-        <h5 className="text-danger">Poll chart</h5>
-        <Doughnut data={data} options={options}/>
-      </div>
-      <div className="mr-2 list-container">
-        <div><h2>Votes</h2></div>
-        <ListGroup className="mt-4 ">
-          {labels.map((label, idx) => (
-            <ListGroup.Item
-              as="li"
-              key={idx}
-              className="d-flex justify-content-between align-items-start"
-            >
-              <div className="fw-bold mr-2">{label}</div>
-              <Badge variant="primary" pill>
-                votes : {votes[idx]}
-              </Badge>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-      </div>
-    </>
+    <div className={styles.chartBox}>
+      <Doughnut data={data} options={options} />
+    </div>
   )
 }
 

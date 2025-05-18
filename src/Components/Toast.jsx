@@ -20,7 +20,10 @@ function ToastComponent({ show, setShow, roomId }) {
   }
 
   return (
-    <div className="position-fixed top-0 start-50 translate-middle-x p-3" style={{ zIndex: 1060 }}>
+    <div
+      className="position-fixed top-0 start-50 translate-middle-x p-3 bounceIn"
+      style={{ zIndex: 1060 }}
+    >
       <Toast show={show} onClose={toggleShow} animation>
         <Toast.Header>
           <strong className="me-auto">Copy room-id</strong>

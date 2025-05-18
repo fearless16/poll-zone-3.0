@@ -1,39 +1,28 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useReducer,
-  useRef,
-  useState,
-} from 'react'
+import { createContext, useContext, useEffect, useReducer, useState } from 'react'
 import { onSnapshot, doc } from 'firebase/firestore'
 import { db } from '../Firebase/config'
-import { pollReducer, SUCCESS, LOADING, FAILURE } from './pollReducer'
+import { REDUCER_ACTIONS } from '../Utils/constants'
+import { pollReducer } from './pollReducer'
 
-/*
-  ----------------------------------------------------------------------
-  🧠 Context Setup: RoomDataContext
-  Centralized state provider for room ID, user ID, and real-time poll state
-  ----------------------------------------------------------------------
-*/
+/**
+ * RoomDataContext provides the current poll state and user/room identifiers.
+ */
 export const RoomDataContext = createContext()
 
-/*
-  ----------------------------------------------------------------------
-  🧪 Custom Hook: useRoomData
-  Simplifies context access — keeps code DRY in consumers
-  ----------------------------------------------------------------------
-*/
+/**
+ * Custom hook to access RoomDataContext.
+ */
 export const useRoomData = () => useContext(RoomDataContext)
 
-/*
-  ----------------------------------------------------------------------
-  🚀 Provider Component: RoomDataContextProvider
-  Provides real-time state sync from Firestore for poll data
-  ----------------------------------------------------------------------
-*/
+/**
+ * RoomDataContextProvider sets up a real-time listener to the Firestore document
+ * representing the current room and updates the poll state accordingly.
+ *
+ * @param {Object} props - React props.
+ * @param {React.ReactNode} props.children - Child components.
+ * @returns {JSX.Element} The context provider component.
+ */
 export const RoomDataContextProvider = ({ children }) => {
-  // 🎯 Central reducer for poll data
   const [pollState, dispatch] = useReducer(pollReducer, {
     loading: true,
     currentPollData: {},
@@ -48,67 +37,34 @@ export const RoomDataContextProvider = ({ children }) => {
   const [roomId, setRoomId] = useState('')
   const [userId, setUserId] = useState('')
 
-  /*
-    ----------------------------------------------------------------------
-    🔄 Sync: Store latest pollState in a ref to avoid stale closures
-    Firestore listener can lag behind render cycle, so we mirror stateRef
-    ----------------------------------------------------------------------
-  */
-  const stateRef = useRef(pollState)
-  useEffect(() => {
-    stateRef.current = pollState
-  }, [pollState])
-
-  /*
-    ----------------------------------------------------------------------
-    🔥 Firestore onSnapshot Listener
-    - Runs when both roomId and userId are available
-    - Uses fallback if Firestore gets stuck on optimistic local writes
-    - Avoids re-dispatching same poll data via optional `same` check
-    ----------------------------------------------------------------------
-  */
   useEffect(() => {
     if (!roomId || !userId) return
 
-    dispatch({ type: LOADING })
+    dispatch({ type: REDUCER_ACTIONS.LOADING })
 
     const docRef = doc(db, 'rooms', roomId)
 
-    let confirmed = false
-    let lastPayload = null
-
-    // ⏳ Fallback if metadata.hasPendingWrites stays true forever
-    const fallbackTimeout = setTimeout(() => {
-      if (!confirmed && lastPayload) {
-        console.warn('🔥 Dispatching SUCCESS via fallback')
-        dispatch({ type: SUCCESS, payload: lastPayload })
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (!docSnap.exists()) {
+        dispatch({ type: REDUCER_ACTIONS.FAILURE })
+        return
       }
-    }, 3000)
 
-    const unsubscribe = onSnapshot(docRef, (docSnapshot) => {
-      const data = docSnapshot.data()
-
-      // 🚫 Defensive check — invalid doc or no poll = failure
-      if (!docSnapshot.exists() || !data || !data.poll) {
-        dispatch({ type: FAILURE })
+      const data = docSnap.data()
+      if (!data?.poll) {
+        dispatch({ type: REDUCER_ACTIONS.FAILURE })
         return
       }
 
       const payload = { ...data, userId, roomId }
-      lastPayload = payload
+      dispatch({ type: REDUCER_ACTIONS.SUCCESS, payload })
 
-      if (!docSnapshot.metadata.hasPendingWrites) {
-        confirmed = true
-        clearTimeout(fallbackTimeout)
-        dispatch({ type: SUCCESS, payload })
+      if (docSnap.metadata.hasPendingWrites) {
+        console.warn('Local changes pending sync with server.')
       }
     })
 
-    // 🧹 Cleanup on room/user switch or component unmount
-    return () => {
-      clearTimeout(fallbackTimeout)
-      unsubscribe()
-    }
+    return () => unsubscribe()
   }, [roomId, userId])
 
   const value = {
@@ -120,9 +76,5 @@ export const RoomDataContextProvider = ({ children }) => {
     setUserId,
   }
 
-  return (
-    <RoomDataContext.Provider value={value}>
-      {children}
-    </RoomDataContext.Provider>
-  )
+  return <RoomDataContext.Provider value={value}>{children}</RoomDataContext.Provider>
 }

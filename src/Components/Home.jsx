@@ -1,15 +1,21 @@
+/**
+ *
+ * This component manages the initial entry point of the app —
+ * allows users to create a new poll room or join an existing one.
+ * Handles localStorage user info setup and conditional navigation.
+ */
+
 import { useState, useRef } from 'react'
 import { createRoom, joinPoll } from '../Firebase/dbHandler'
 import { Alert, Card, Button } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import Toast from './Toast'
-import Header from './Header'
-import Footer from './Footer'
+import styles from './Home.module.css'
 
 /**
  * Home Component
- * Handles creation and joining of poll rooms.
- * Uses React-Bootstrap for layout and styling.
+ * @component
+ * @returns {JSX.Element} A page with create/join poll functionality
  */
 function Home() {
   const [error, setError] = useState(null)
@@ -25,11 +31,8 @@ function Home() {
   const navigate = useNavigate()
 
   /**
-   * Handles "Create Poll Room" form submission.
-   * Calls Firestore to create a new room and stores roomId in localStorage.
-   * Shows toast on success.
-   *
-   * @param {Event} e - Form submit event
+   * Submits form to create a new poll room
+   * @param {React.FormEvent<HTMLFormElement>} e
    */
   const handleCreateSubmit = async (e) => {
     e.preventDefault()
@@ -41,22 +44,17 @@ function Home() {
       const roomName = roomNameRef.current.value
 
       const { response, error } = await createRoom(name, roomName)
-
       if (error) {
         setError(error.message || 'Failed to create room')
         return
       }
 
-      // Store the generated room ID
       localStorage.setItem('roomId', response.roomId)
       setRoomId(response.roomId)
-
-      // Reset form + show toast
       createNameRef.current.value = ''
       roomNameRef.current.value = ''
       setShow(true)
     } catch (err) {
-      console.error('Create Room Error:', err)
       setError('Something went wrong')
     } finally {
       setDisabled(false)
@@ -64,11 +62,8 @@ function Home() {
   }
 
   /**
-   * Handles "Join Poll Room" form submission.
-   * Validates room ID and display name, stores info in localStorage,
-   * and navigates to the /poll route on success.
-   *
-   * @param {Event} e - Form submit event
+   * Submits form to join an existing poll room
+   * @param {React.FormEvent<HTMLFormElement>} e
    */
   const handleJoinSubmit = async (e) => {
     e.preventDefault()
@@ -86,19 +81,17 @@ function Home() {
 
     try {
       localStorage.setItem('roomId', roomId)
-      const { response, error } = await joinPoll(roomId, name)
+      const { error } = await joinPoll(roomId, name)
 
       if (error) {
         setError(error.message || 'Failed to join room')
         return
       }
 
-      // Clear inputs and route to /poll
       idRef.current.value = ''
       joinNameRef.current.value = ''
       navigate('/poll')
     } catch (err) {
-      console.error('Join Room Error:', err)
       setError('Something went wrong')
     } finally {
       setDisabled(false)
@@ -106,73 +99,63 @@ function Home() {
   }
 
   return (
-    <>
-      <Header />
+    <div className={styles.homeWrapper}>
+      <div className={styles.formContainer}>
+        {error && <Alert variant="danger">{error}</Alert>}
 
-      <div className="home-div">
-        <div className="form-div">
-          {/* Error Display */}
-          {error && <Alert variant="danger">{error}</Alert>}
+        <Card className={styles.formCard}>
+          <Card.Body>
+            <Card.Title>Create Poll Room</Card.Title>
+            <form onSubmit={handleCreateSubmit}>
+              <input
+                ref={createNameRef}
+                type="text"
+                className="form-control mb-3"
+                placeholder="Enter display name"
+                required
+              />
+              <input
+                ref={roomNameRef}
+                type="text"
+                className="form-control mb-3"
+                placeholder="Enter room name"
+                required
+              />
+              <Button type="submit" variant="primary" className="w-100 mt-4" disabled={disabled}>
+                Create Poll
+              </Button>
+            </form>
+          </Card.Body>
+        </Card>
 
-          {/* 🔹 Create Poll Section */}
-          <Card style={{ width: '30rem' }} className="shadow p-3 mb-5 bg-white rounded m-2">
-            <Card.Body>
-              <Card.Title>Create Poll Room</Card.Title>
-              <form onSubmit={handleCreateSubmit}>
-                <input
-                  ref={createNameRef}
-                  type="text"
-                  className="form-control mb-2"
-                  placeholder="Enter display name"
-                  required
-                />
-                <input
-                  ref={roomNameRef}
-                  type="text"
-                  className="form-control mb-2"
-                  placeholder="Enter room name"
-                  required
-                />
-                <Button type="submit" variant="primary" className="m-2" disabled={disabled}>
-                  Create Poll
-                </Button>
-              </form>
-            </Card.Body>
-          </Card>
-
-          {/* 🔸 Join Poll Section */}
-          <Card style={{ width: '30rem' }} className="shadow p-3 mb-5 bg-white rounded m-2">
-            <Card.Body>
-              <Card.Title>Join Poll Room</Card.Title>
-              <form onSubmit={handleJoinSubmit}>
-                <input
-                  ref={joinNameRef}
-                  type="text"
-                  className="form-control mb-2"
-                  placeholder="Enter display name"
-                  required
-                />
-                <input
-                  ref={idRef}
-                  type="text"
-                  className="form-control mb-2"
-                  placeholder="Enter room id"
-                  required
-                />
-                <Button type="submit" variant="secondary" className="m-2" disabled={disabled}>
-                  Join Poll
-                </Button>
-              </form>
-            </Card.Body>
-          </Card>
-        </div>
-
-        {/* ✅ Toast Notification after room creation */}
-        {show && <Toast show={show} setShow={setShow} roomId={roomId} />}
+        <Card className={styles.formCard}>
+          <Card.Body>
+            <Card.Title>Join Poll Room</Card.Title>
+            <form onSubmit={handleJoinSubmit}>
+              <input
+                ref={joinNameRef}
+                type="text"
+                className="form-control mb-3"
+                placeholder="Enter display name"
+                required
+              />
+              <input
+                ref={idRef}
+                type="text"
+                className="form-control mb-3"
+                placeholder="Enter room id"
+                required
+              />
+              <Button type="submit" variant="secondary" className="w-100 mt-4" disabled={disabled}>
+                Join Poll
+              </Button>
+            </form>
+          </Card.Body>
+        </Card>
       </div>
 
-      <Footer />
-    </>
+      {show && <Toast show={show} setShow={setShow} roomId={roomId} />}
+    </div>
   )
 }
 

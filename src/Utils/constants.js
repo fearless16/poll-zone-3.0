@@ -29,4 +29,17 @@ export const Messages = {
     linkMessage: 'Go to poll page',
     path: '/poll',
   },
+  ERROR: {
+    message: 'Something went wrong !!',
+  },
+}
+
+export const REDUCER_ACTIONS = {
+  SUCCESS: 'SUCCESS_ACTION',
+  LOADING: 'LOADING',
+  FAILURE: 'FAILURE',
+  VOTED: 'VOTED',
+  UNSET_LOADING: 'UNSET_LOADING',
+  OPEN: 'OPEN',
+  ROOM_EXPIRED: 'ROOM_EXPIRED',
 }

@@ -2,136 +2,122 @@ import { useState, useRef } from 'react'
 import { addPoll } from '../Firebase/dbHandler'
 import { useRoomData } from '../Context/useRoomData'
 import { useNavigate } from 'react-router-dom'
-import { Card, Button, Alert } from 'react-bootstrap'
-import { FAILURE } from '../Context/pollReducer'
+import { Card, Button, Alert, Form, Row, Col } from 'react-bootstrap'
+import { REDUCER_ACTIONS } from '../Utils/constants'
 import Loader from './Loader'
 
 function Voting() {
   const [numberOfOptions, setNumberOfOptions] = useState(4)
-  const formRef = useRef()
-  const [clicked, setClicked] = useState(false)
   const [question, setQuestion] = useState('')
-  const [error, setError] = useState()
+  const [error, setError] = useState('')
+  const [clicked, setClicked] = useState(false)
+
+  const formRef = useRef()
   const { dispatch, pollState } = useRoomData()
   const navigate = useNavigate()
 
   const renderOptions = () => {
-    const optionsArray = []
-    let renders = 0
-    renders = numberOfOptions < 9 ? numberOfOptions : 8
-    renders = renders > 1 ? renders : 0
-    for (let i = 0; i < renders; i++) {
-      const optionsField = (
-        <input
-          type="text"
-          name="options"
-          className="input form-control mb-2"
-          key={i}
-          required
-          placeholder={`Option ${i + 1}`}
-        />
-      )
-      optionsArray.push(optionsField)
-    }
-    return optionsArray
+    const renders = Math.max(2, Math.min(numberOfOptions, 8))
+    return Array.from({ length: renders }, (_, i) => (
+      <Form.Control
+        type="text"
+        name="options"
+        key={i}
+        required
+        placeholder={`Option ${i + 1}`}
+        className="mb-2"
+      />
+    ))
   }
 
   const handleChange = (e) => {
-    setNumberOfOptions(e.target.value < 8 ? e.target.value : 8)
-    if (e.target.value > 8) {
-      setError('Number of options should be less than 11')
-    } else if (e.target.value < 2) {
-      setError('Number of options should be greater than 1')
-    } else {
-      setError('')
-    }
+    const value = parseInt(e.target.value)
+    setNumberOfOptions(value)
+    if (value > 8) setError('Maximum 8 options allowed')
+    else if (value < 2) setError('Minimum 2 options required')
+    else setError('')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Disabling the submit button
     setClicked(true)
-    const elements = e.target.elements
-    const optionValues = []
-    if (numberOfOptions < 1) {
-      setError('Number of options should be greater than 1')
-      return
-    }
-    for (let i = 0, element; (element = elements[i++]); ) {
-      if (element.name === 'options') {
-        const option = {
-          option: element.value.trim(),
-          votes: 0,
-        }
-        optionValues.push(option)
+    const formElements = e.target.elements
+    const options = []
+
+    for (let i = 0; i < formElements.length; i++) {
+      const el = formElements[i]
+      if (el.name === 'options' && el.value.trim()) {
+        options.push({ option: el.value.trim(), votes: 0 })
       }
     }
 
-    setData(optionValues, question)
-      .then(() => {
-        navigate('/poll')
-      })
-      .catch(() => {
-        navigate('/create')
-      })
-  }
+    if (options.length < 2) {
+      setError('At least 2 valid options required')
+      setClicked(false)
+      return
+    }
 
-  async function setData(options, question) {
     try {
       const roomId = localStorage.getItem('roomId')
-      return addPoll(roomId, options, question)
-    } catch (err) {
-      dispatch({ type: FAILURE })
+      await addPoll(roomId, options, question)
+      navigate('/poll')
+    } catch {
+      dispatch({ type: REDUCER_ACTIONS.FAILURE })
+      setClicked(false)
       navigate('/create')
     }
   }
 
   return (
     <>
-      {error && (numberOfOptions < 2 || numberOfOptions > 8) && (
-        <Alert variant="danger">{error}</Alert>
-      )}
-      {pollState.loading && <Loader />}
+      {/* {(pollState.loading || clicked) && <Loader />} */}
       {!pollState.loading && (
-        <Card className="form-manager shadow p-3 mb-3 bg-white rounded ">
+        <Card className="border-2">
+          {' '}
           <Card.Body>
-            <Card.Title> Question Poll </Card.Title>
-            <form
-              ref={formRef}
-              onSubmit={(e) => handleSubmit(e)}
-              className="voting"
-            >
-              <input
-                type="text"
-                className="input form-control mb-2"
-                placeholder="Enter question"
-                onChange={(e) => setQuestion(e.target.value)}
-                required
-              />
-              <input
-                type="number"
-                className="input form-control mb-2"
-                value={numberOfOptions}
-                min={2}
-                max={8}
-                onChange={(e) => handleChange(e)}
-                placeholder="Number of Options"
-              />
-              {renderOptions().map((field) => field)}
-              <div className="buttons-grp ">
-                <Button
-                  disabled={clicked}
-                  type="reset"
-                  className="m-2"
-                  variant="danger"
-                >
-                  Reset Form{' '}
-                </Button>
-                <Button disabled={clicked} type="submit" className="m-2">
-                  Submit
-                </Button>
-              </div>
-            </form>
+            <Card.Title className="fw-semibold mb-3">Create Question Poll</Card.Title>
+
+            {error && <Alert variant="danger">{error}</Alert>}
+
+            <Form ref={formRef} onSubmit={handleSubmit}>
+              <Form.Group className="mb-3">
+                <Form.Control
+                  type="text"
+                  placeholder="Enter your question"
+                  value={question}
+                  className="p-3"
+                  onChange={(e) => setQuestion(e.target.value)}
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Control
+                  type="number"
+                  placeholder="Number of options (2–8)"
+                  value={numberOfOptions}
+                  min={2}
+                  max={8}
+                  onChange={handleChange}
+                  required
+                />
+              </Form.Group>
+
+              <div className="mb-3">{renderOptions()}</div>
+
+              <Row className="justify-content-center mt-3">
+                <Col xs="auto">
+                  <Button variant="secondary" type="reset" size="md" disabled={clicked}>
+                    Reset
+                  </Button>
+                </Col>
+                <Col xs="auto">
+                  <Button variant="primary" type="submit" size="md" disabled={clicked}>
+                    {clicked ? 'Submitting...' : 'Submit'}
+                  </Button>
+                </Col>
+              </Row>
+            </Form>
           </Card.Body>
         </Card>
       )}

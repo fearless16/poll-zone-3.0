@@ -1,10 +1,4 @@
-export const SUCCESS = 'SUCCESS_ACTION'
-export const LOADING = 'LOADING'
-export const FAILURE = 'FAILURE'
-export const VOTED = 'VOTED'
-export const UNSET_LOADING = 'UNSET_LOADING'
-export const OPEN = 'OPEN'
-export const ROOM_EXPIRED = 'ROOM_EXPIRED'
+import { Messages, REDUCER_ACTIONS } from '../Utils/constants'
 
 const isVoted = ({ voted }, userId) => {
   if (!voted || !userId) {
@@ -18,8 +12,11 @@ const isPoll = (poll) => !!poll && Object.keys(poll).length > 0
 const isHost = ({ host }, userId) => !!userId && host === userId
 
 export const pollReducer = (state, action) => {
+  if (state.currentPollData?.lastUpdated > action.payload?.poll.lastUpdated) {
+    return state
+  }
   switch (action.type) {
-    case SUCCESS:
+    case REDUCER_ACTIONS.SUCCESS:
       return {
         ...state,
         loading: false,
@@ -27,21 +24,18 @@ export const pollReducer = (state, action) => {
         roomData: action.payload,
         error: '',
         isHost: isHost(action.payload, action.payload.userId),
-        isOpen: !!action.payload.poll.isOpen,
-        voted: isVoted(action.payload.poll, action.payload.userId),
+        isOpen: !!action.payload?.poll?.isOpen,
+        voted: isVoted(action.payload?.poll || {}, action.payload.userId),
         isPoll: isPoll(action.payload.poll),
       }
-    case OPEN:
+    case REDUCER_ACTIONS.OPEN:
       return { ...state, isOpen: true }
-    case VOTED:
-      return { ...state, voted: true }
-    case LOADING:
+    case REDUCER_ACTIONS.LOADING:
       return { ...state, loading: true }
-    case UNSET_LOADING:
+    case REDUCER_ACTIONS.UNSET_LOADING:
       return { ...state, loading: false }
-    case FAILURE:
-      console.log(state)
-      return { ...state, loading: false, error: 'Something went wrong' }
+    case REDUCER_ACTIONS.FAILURE:
+      return { ...state, loading: false, error: Messages.ERROR.message }
     default:
       return state
   }

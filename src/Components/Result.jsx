@@ -1,4 +1,4 @@
-import { Button, Card } from 'react-bootstrap'
+import { Button, Container, Row, Col, Card, Badge, ListGroup } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import Charts from './Chart'
@@ -7,45 +7,22 @@ import Modals from './Modal'
 import Loader from './Loader'
 import SideBar from './SideBar'
 import RoomDetailsCard from './RoomDetailsCard'
-import Header from './Header'
-import Footer from './Footer'
 import NoPoll from './NoPoll'
 import { useRoomData } from '../Context/useRoomData'
-import { LOADING, UNSET_LOADING } from '../Context/pollReducer'
+import { REDUCER_ACTIONS } from '../Utils/constants'
 import { Messages } from '../Utils/constants'
+import styles from './Result.module.css'
 
-/*
-  ----------------------------------------------------------------------
-  📊 Result Component
-  Shows real-time result of poll, handles poll closure,
-  loader state, navigation and access control
-  ----------------------------------------------------------------------
-*/
 function Result() {
   const [submitted, setSubmitted] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const navigate = useNavigate()
+  const { pollState, roomId, userId, dispatch, setRoomId, setUserId } = useRoomData()
 
-  const {
-    pollState,
-    roomId,
-    userId,
-    dispatch,
-    setRoomId,
-    setUserId,
-  } = useRoomData()
-
-  /*
-    ----------------------------------------------------------------------
-    🛑 Access Control: Check roomId & userId
-    Fallback to localStorage or navigate to home
-    ----------------------------------------------------------------------
-  */
   useEffect(() => {
     if (!roomId || !userId) {
       const storedRoom = localStorage.getItem('roomId')
       const storedUser = localStorage.getItem('id')
-
       if (storedRoom && storedUser) {
         setRoomId(storedRoom)
         setUserId(storedUser)
@@ -53,59 +30,36 @@ function Result() {
         navigate('/')
       }
     }
-
-    return () => {
-      dispatch({ type: UNSET_LOADING })
-    }
+    return () => dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
   }, [])
 
-  /*
-    ----------------------------------------------------------------------
-    🔁 Reactively Redirect if roomId/userId missing post-load
-    Prevents access if context was not initialized
-    ----------------------------------------------------------------------
-  */
   useEffect(() => {
-    if ((!roomId || !userId) && !pollState.loading) {
-      navigate('/')
-    }
+    if ((!roomId || !userId) && !pollState.loading) navigate('/')
   }, [roomId, userId, pollState.loading])
 
-  /*
-    ----------------------------------------------------------------------
-    🚨 Handle "New Poll" button click
-    Validates if all users have voted before allowing poll closure
-    Shows modal if votes are pending
-    ----------------------------------------------------------------------
-  */
   const handleClick = async () => {
-    dispatch({ type: LOADING })
-
+    dispatch({ type: REDUCER_ACTIONS.LOADING })
+    setSubmitted(true)
     const totalVotes = pollState.currentPollData.voted.length
     const totalUsers = pollState.roomData.participants.length
-
     if (totalVotes < totalUsers) {
-      dispatch({ type: UNSET_LOADING })
+      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
+      setSubmitted(false)
       setModalOpen(true)
       return
     }
-
-    if (totalVotes === totalUsers || submitted) {
-      try {
-        await closePoll(roomId)
-        navigate('/create')
-      } catch (err) {
-        setSubmitted(false)
-      } finally {
-        dispatch({ type: UNSET_LOADING })
-      }
+    try {
+      await closePoll(roomId)
+      navigate('/create')
+    } catch {
+      setSubmitted(false)
+    } finally {
+      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
     }
   }
 
   return (
-    <>
-      <Header />
-
+    <div className="page-wrapper">
       {(pollState.loading || submitted) && <Loader />}
 
       {!pollState.loading && !pollState.isPoll && (
@@ -113,7 +67,7 @@ function Result() {
       )}
 
       {!pollState.loading && pollState.isPoll && !submitted && (
-        <div className="result-container mx-auto d-flex btn-container z-index">
+        <main className={styles.resultWrapper}>
           {modalOpen && (
             <Modals
               setModalOpen={setModalOpen}
@@ -124,64 +78,89 @@ function Result() {
             />
           )}
 
-          <Card style={{ width: '100%', maxHeight: '700px' }}>
-            {pollState.currentPollData && (
-              <>
-                <Card.Title className="text-center mt-2">Poll Statistics</Card.Title>
-                <div className="chart d-flex justify-content-between mb-2">
-                  <Charts chartData={pollState.currentPollData} />
-                </div>
-              </>
-            )}
+          <RoomDetailsCard room={pollState.roomData} isOpen={pollState.currentPollData.isOpen} />
 
-            <div className="mx-auto">
-              {pollState.isOpen && pollState.isHost && (
-                <Button
-                  onClick={handleClick}
-                  disabled={submitted}
-                  style={{ cursor: 'pointer', marginTop: '-2rem' }}
-                  variant="danger"
-                >
-                  New poll
-                </Button>
-              )}
+          <Card className={styles.resultCardWrapper}>
+            <Container fluid>
+              <Row className="g-3">
+                <Col xs={12} md={9}>
+                  <Row className="g-3">
+                    <Col xs={12} md={7}>
+                      <div className={styles.chartBox}>
+                        <Charts chartData={pollState.currentPollData} />
+                      </div>
+                    </Col>
 
-              {pollState.isOpen && (
-                <Button
-                  onClick={() => navigate('/poll')}
-                  style={{
-                    cursor: 'pointer',
-                    marginTop: '-2rem',
-                    marginLeft: '.5rem',
-                  }}
-                  variant="secondary"
-                >
-                  Go to poll
-                </Button>
-              )}
+                    <Col xs={12} md={5}>
+                      <Card>
+                        <Card.Header className="fw-semibold text-center">Votes</Card.Header>
+                        <Card.Body>
+                          <ListGroup variant="flush">
+                            {pollState.currentPollData.options.map((opt, idx) => (
+                              <ListGroup.Item key={idx} className="d-flex justify-content-between">
+                                <span>{opt.option}</span>
+                                <Badge
+                                  bg="dark"
+                                  style={{
+                                    fontSize: '1rem',
+                                    borderRadius: '1.5rem',
+                                    width: '3rem',
+                                  }}
+                                >
+                                  {opt.votes}
+                                </Badge>
+                              </ListGroup.Item>
+                            ))}
+                          </ListGroup>
+                        </Card.Body>
+                      </Card>
+                    </Col>
 
-              {!pollState.isOpen && <p>Poll has been closed</p>}
+                    <Row className="my-4 justify-content-center g-3">
+                      {pollState.isOpen && pollState.isHost && (
+                        <Col xs="auto">
+                          <Button onClick={handleClick} disabled={submitted} variant="danger">
+                            {submitted ? (
+                              <>
+                                <span
+                                  className="spinner-border spinner-border-sm me-2"
+                                  role="status"
+                                  aria-hidden="true"
+                                />
+                                Poll is closing...
+                              </>
+                            ) : (
+                              'New poll'
+                            )}
+                          </Button>
+                        </Col>
+                      )}
+                      {pollState.isOpen && (
+                        <Col xs="auto">
+                          <Button onClick={() => navigate('/poll')} variant="secondary">
+                            Go to poll
+                          </Button>
+                        </Col>
+                      )}
+                    </Row>
 
-              <div className="room-details">
-                {pollState.roomData && (
-                  <RoomDetailsCard
-                    room={pollState.roomData}
-                    roomId={roomId}
-                    isOpen={pollState.currentPollData.isOpen}
-                  />
-                )}
-              </div>
-            </div>
+                    {!pollState.isOpen && (
+                      <Row>
+                        <Col className="text-center text-muted">Poll has been closed</Col>
+                      </Row>
+                    )}
+                  </Row>
+                </Col>
+
+                <Col xs={12} md={3}>
+                  <SideBar voted={pollState.currentPollData.voted} />
+                </Col>
+              </Row>
+            </Container>
           </Card>
-
-          {pollState.currentPollData && (
-            <SideBar voted={pollState.currentPollData.voted} />
-          )}
-        </div>
+        </main>
       )}
-
-      <Footer />
-    </>
+    </div>
   )
 }
 

@@ -18,14 +18,14 @@ A lightning-fast, race-condition-proof voting system built using **React**, **Fi
 
 ## 🧱 Tech Stack
 
-| Tech      | Usage                     |
-|-----------|---------------------------|
-| React     | Frontend (18+)            |
-| Firebase  | Firestore DB              |
-| Firestore | Real-time sync + storage  |
-| Vite      | Fast dev + build tooling  |
-| Jest      | Unit + emulator testing   |
-| Firebase Emulator | Local test infra  |
+| Tech              | Usage                    |
+| ----------------- | ------------------------ |
+| React             | Frontend (18+)           |
+| Firebase          | Firestore DB             |
+| Firestore         | Real-time sync + storage |
+| Vite              | Fast dev + build tooling |
+| Jest              | Unit + emulator testing  |
+| Firebase Emulator | Local test infra         |
 
 ---
 
@@ -52,6 +52,7 @@ A lightning-fast, race-condition-proof voting system built using **React**, **Fi
 ### 🔄 `useRoomData` (React Hook)
 
 Attaches Firestore snapshot listener:
+
 ```js
 onSnapshot(doc(db, 'rooms', roomId), (snapshot) => {
   if (!snapshot.metadata.hasPendingWrites) {
@@ -78,11 +79,13 @@ await runTransaction(db, async (transaction) => {
 ## 🧪 Run Emulator Tests
 
 1. Start Firestore Emulator:
+
 ```bash
 npm run emulators
 ```
 
 2. Run tests:
+
 ```bash
 npm run test
 ```
