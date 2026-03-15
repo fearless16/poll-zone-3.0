@@ -119,9 +119,3 @@ npm run dev
 - All voting logic is transactional but still needs `auth` protection for prod
 
 ---
-
-## 📢 Credits
-
-Built by Prajwal Bairagi — for all those chomu teams who still think Google Forms is “voting”.
-
----
