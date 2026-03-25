@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { REDUCER_ACTIONS } from '../Utils/constants'
-import { useRoomData } from '../Context/useRoomData'
+
 const Timer = ({ expiresAfter }) => {
-  const { dispatch } = useRoomData()
   const [timer, setTimer] = useState(() => {})
   const navigate = useNavigate()
   const calculateTimeLeft = () => {
@@ -13,7 +11,6 @@ const Timer = ({ expiresAfter }) => {
       localStorage.removeItem('id')
       localStorage.removeItem('roomId')
       localStorage.removeItem('displayName')
-      dispatch({ type: REDUCER_ACTIONS.ROOM_EXPIRED })
       navigate('/')
       return
     }

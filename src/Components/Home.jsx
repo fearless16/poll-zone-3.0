@@ -49,7 +49,6 @@ function Home() {
         return
       }
 
-      localStorage.setItem('roomId', response.roomId)
       setRoomId(response.roomId)
       createNameRef.current.value = ''
       roomNameRef.current.value = ''

@@ -1,7 +1,6 @@
 import { Icon } from '@iconify/react'
 
-function PageNotFound({ welcomeRef }) {
-  welcomeRef?.current.classList.add('hide')
+function PageNotFound() {
   return (
     <div className="d-flex justify-content-center align-items-center">
       <Icon icon="fa:frown-o" height={300} width={40} className="mx-2 align-self-center" />{' '}

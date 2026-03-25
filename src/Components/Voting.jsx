@@ -4,7 +4,6 @@ import { useRoomData } from '../Context/useRoomData'
 import { useNavigate } from 'react-router-dom'
 import { Card, Button, Alert, Form, Row, Col } from 'react-bootstrap'
 import { REDUCER_ACTIONS } from '../Utils/constants'
-import Loader from './Loader'
 
 function Voting() {
   const [numberOfOptions, setNumberOfOptions] = useState(4)
@@ -70,7 +69,6 @@ function Voting() {
 
   return (
     <>
-      {/* {(pollState.loading || clicked) && <Loader />} */}
       {!pollState.loading && (
         <Card className="border-2">
           {' '}

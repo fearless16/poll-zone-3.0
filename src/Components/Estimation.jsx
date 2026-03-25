@@ -3,7 +3,6 @@ import { addPoll } from '../Firebase/dbHandler'
 import { useRoomData } from '../Context/useRoomData'
 import { Card, Button, Alert, Form, Row, Col } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
-import Loader from './Loader'
 import { REDUCER_ACTIONS } from '../Utils/constants'
 
 function Estimation() {
@@ -42,8 +41,6 @@ function Estimation() {
 
   return (
     <>
-      {/* {(pollState.loading || clicked) && <Loader />} */}
-
       {!pollState.loading && pollState.error && (
         <Alert variant="danger" className="mt-3">
           {pollState.error}
