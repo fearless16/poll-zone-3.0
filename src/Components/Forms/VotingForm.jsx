@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { castVote } from '../../Firebase/dbHandler'
 import { Button, Row, Col, Form, Spinner } from 'react-bootstrap'
 import Loader from '../Loader'
-import { REDUCER_ACTIONS } from '../../Utils/constants'
 
 /**
  * VotingForm component - handles voting flow inside a poll.
@@ -18,6 +17,7 @@ function VotingForm({ pollState, dispatch }) {
   const [selected, setSelected] = useState('')
   const [clicked, setClicked] = useState(false)
   const [options, setOptions] = useState([])
+  const [error, setError] = useState('')
 
   /**
    * Handles vote submission.
@@ -26,8 +26,8 @@ function VotingForm({ pollState, dispatch }) {
    */
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (clicked) return
     setClicked(true)
-    dispatch({ type: REDUCER_ACTIONS.LOADING })
 
     try {
       const id = localStorage.getItem('id')
@@ -40,17 +40,14 @@ function VotingForm({ pollState, dispatch }) {
         !pollState?.currentPollData ||
         pollState.currentPollData.voted.some((v) => v.id === id)
       ) {
-        setClicked(false)
-        dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
         return
       }
 
       await castVote(roomId, index, id, displayName)
     } catch (err) {
-      dispatch({ type: REDUCER_ACTIONS.FAILURE })
+      setError(err.message || 'Failed to submit vote')
     } finally {
       setClicked(false)
-      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
     }
   }
 
@@ -86,10 +83,15 @@ function VotingForm({ pollState, dispatch }) {
   */
   return (
     <>
-      {(clicked || pollState.loading) && <Loader />}
+      {clicked && <Loader />}
 
       {!clicked && pollState.currentPollData && (
         <Form onSubmit={handleSubmit} className="p-4 bg-white shadow rounded-3 bounceIn mt-4">
+          {error && (
+            <div className="alert alert-danger text-center" role="alert">
+              {error}
+            </div>
+          )}
           <h5 className="text-center mb-4 fw-bold">{question || 'Estimation Poll'}</h5>
           <Row>
             <Col xs={12} className="d-flex flex-column gap-3">

@@ -56,12 +56,11 @@ export const RoomDataContextProvider = ({ children }) => {
         return
       }
 
+      // Skip local-only snapshots to avoid flicker from stale data
+      if (docSnap.metadata.hasPendingWrites) return
+
       const payload = { ...data, userId, roomId }
       dispatch({ type: REDUCER_ACTIONS.SUCCESS, payload })
-
-      if (docSnap.metadata.hasPendingWrites) {
-        console.warn('Local changes pending sync with server.')
-      }
     })
 
     return () => unsubscribe()
