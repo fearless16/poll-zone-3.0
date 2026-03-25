@@ -10,9 +10,10 @@
     "lint:fix": "bunx eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "format": "bunx prettier --write .",
     "format:check": "bunx prettier --check .",
-    "test": "firebase emulators:exec --project poll-zone 'bunx vitest run --coverage --passWithNoTests'",
-    "test:ci": "firebase emulators:exec --project poll-zone 'bunx vitest run --coverage'",
-    "test:watch": "firebase emulators:exec --project poll-zone 'bunx vitest --watch'"
+    "test": "npx firebase emulators:exec --project poll-zone 'npx vitest run --passWithNoTests'",
+    "test:ci": "npx firebase emulators:exec --project poll-zone 'npx vitest run --coverage'",
+    "test:watch": "npx firebase emulators:exec --project poll-zone 'npx vitest --watch'",
+    "test:unit": "npx vitest run tests/pollReducer.test.jsx tests/dbHandler.test.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "6.7.2",

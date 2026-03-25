@@ -141,7 +141,7 @@ describe('useRoomData hook', () => {
     expect(warnSpy).not.toHaveBeenCalled()
   })
 
-  it('dispatches SUCCESS and warns when hasPendingWrites is true', async () => {
+  it('skips snapshot when hasPendingWrites is true', async () => {
     onSnapshot.mockImplementation((_, cb) => {
       cb({
         exists: () => true,
@@ -161,10 +161,10 @@ describe('useRoomData hook', () => {
       </RoomDataContextProvider>
     )
 
+    // Should stay empty because pending writes are skipped
     await waitFor(() => {
-      expect(getByTestId('question').textContent).toBe('Q2')
+      expect(getByTestId('question').textContent).toBe('')
     })
-    expect(warnSpy).toHaveBeenCalledWith('Local changes pending sync with server.')
   })
 
   it('cleans up the listener on unmount', () => {
