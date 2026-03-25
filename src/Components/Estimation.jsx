@@ -22,6 +22,14 @@ function Estimation() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setClicked(true)
+    
+    const roomId = localStorage.getItem('roomId')
+    if (!roomId) {
+      dispatch({ type: REDUCER_ACTIONS.FAILURE })
+      setClicked(false)
+      return
+    }
+    
     const fib = getFibValues(numberOfOptions)
 
     const options = fib.slice(0, numberOfOptions).map((value) => ({
@@ -30,7 +38,6 @@ function Estimation() {
     }))
 
     try {
-      const roomId = localStorage.getItem('roomId')
       await addPoll(roomId, options)
       navigate('/poll')
     } catch (err) {
@@ -61,7 +68,7 @@ function Estimation() {
                     <Form.Control
                       type="number"
                       value={numberOfOptions}
-                      onChange={(e) => setNumberOfOptions(e.target.value)}
+                      onChange={(e) => setNumberOfOptions(parseInt(e.target.value) || 2)}
                       min={2}
                       max={8}
                       placeholder="Number of options"

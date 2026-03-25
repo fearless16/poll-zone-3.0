@@ -32,9 +32,16 @@ function Voting() {
   const handleChange = (e) => {
     const value = parseInt(e.target.value)
     setNumberOfOptions(value)
-    if (value > 8) setError('Maximum 8 options allowed')
-    else if (value < 2) setError('Minimum 2 options required')
-    else setError('')
+    if (value > 8) {
+      setError('Maximum 8 options allowed')
+      setClicked(true)
+    } else if (value < 2) {
+      setError('Minimum 2 options required')
+      setClicked(true)
+    } else {
+      setError('')
+      setClicked(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -42,10 +49,18 @@ function Voting() {
     setClicked(true)
     const formElements = e.target.elements
     const options = []
+    const seenOptions = new Set()
 
     for (let i = 0; i < formElements.length; i++) {
       const el = formElements[i]
       if (el.name === 'options' && el.value.trim()) {
+        const optionValue = el.value.trim().toLowerCase()
+        if (seenOptions.has(optionValue)) {
+          setError('Duplicate options are not allowed')
+          setClicked(false)
+          return
+        }
+        seenOptions.add(optionValue)
         options.push({ option: el.value.trim(), votes: 0 })
       }
     }
@@ -58,7 +73,18 @@ function Voting() {
 
     try {
       const roomId = localStorage.getItem('roomId')
-      await addPoll(roomId, options, question)
+      if (!roomId) {
+        setError('Room ID not found')
+        setClicked(false)
+        return
+      }
+      
+      const { error: pollError } = await addPoll(roomId, options, question)
+      if (pollError) {
+        setError(pollError.message || 'Failed to create poll')
+        setClicked(false)
+        return
+      }
       navigate('/poll')
     } catch {
       dispatch({ type: REDUCER_ACTIONS.FAILURE })

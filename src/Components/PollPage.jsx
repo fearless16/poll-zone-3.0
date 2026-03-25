@@ -23,7 +23,7 @@ const PollPage = () => {
       }
     }
     return () => dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
-  }, [])
+  }, [roomId, userId, navigate, setRoomId, setUserId, dispatch])
 
   useEffect(() => {
     if ((!roomId || !userId) && !pollState.loading) navigate('/')

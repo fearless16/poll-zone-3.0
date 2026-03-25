@@ -2,30 +2,40 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const Timer = ({ expiresAfter }) => {
-  const [timer, setTimer] = useState(() => {})
   const navigate = useNavigate()
+  
   const calculateTimeLeft = () => {
     const currentTime = Date.now()
     const difference = expiresAfter - currentTime
-    if (currentTime > expiresAfter) {
-      localStorage.removeItem('id')
-      localStorage.removeItem('roomId')
-      localStorage.removeItem('displayName')
-      navigate('/')
-      return
+    
+    if (difference <= 0) {
+      return null
     }
+    
     return {
       minutes: Math.floor((difference / (1000 * 60)) % 60),
       seconds: Math.floor((difference / 1000) % 60),
     }
   }
+  
+  const [timer, setTimer] = useState(calculateTimeLeft())
+  
   useEffect(() => {
-    const timerFunction = setTimeout(() => {
+    const interval = setInterval(() => {
       const timeLeft = calculateTimeLeft()
       setTimer(timeLeft)
+      
+      if (!timeLeft) {
+        localStorage.removeItem('id')
+        localStorage.removeItem('roomId')
+        localStorage.removeItem('displayName')
+        navigate('/')
+        clearInterval(interval)
+      }
     }, 1000)
-    return () => clearTimeout(timerFunction)
-  }, [timer])
+    
+    return () => clearInterval(interval)
+  }, [expiresAfter, navigate])
 
   return (
     <>

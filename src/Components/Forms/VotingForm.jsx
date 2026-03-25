@@ -33,19 +33,29 @@ function VotingForm({ pollState, dispatch }) {
       const id = localStorage.getItem('id')
       const displayName = localStorage.getItem('displayName')
       const roomId = localStorage.getItem('roomId')
+      
+      if (!id || !displayName || !roomId) {
+        setError('Missing user information')
+        setClicked(false)
+        return
+      }
+      
+      if (!pollState?.currentPollData || !Array.isArray(options) || options.length === 0) {
+        setError('Invalid poll state')
+        setClicked(false)
+        return
+      }
+      
       const index = options.findIndex((opt) => opt.option.toString() === selected)
 
-      if (
-        index === -1 ||
-        !pollState?.currentPollData ||
-        pollState.currentPollData.voted.some((v) => v.id === id)
-      ) {
+      if (index === -1 || pollState.currentPollData.voted?.some((v) => v.id === id)) {
+        setClicked(false)
         return
       }
 
       await castVote(roomId, index, id, displayName)
     } catch (err) {
-      setError(err.message || 'Failed to submit vote')
+      setError(err?.message || 'Failed to submit vote')
     } finally {
       setClicked(false)
     }

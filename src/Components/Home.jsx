@@ -77,15 +77,29 @@ function Home() {
       setDisabled(false)
       return
     }
+    
+    if (name.length < 2 || name.length > 50) {
+      setError('Display name must be 2-50 characters')
+      setDisabled(false)
+      return
+    }
+    
+    if (roomId.length < 10 || roomId.length > 30) {
+      setError('Invalid Room ID format')
+      setDisabled(false)
+      return
+    }
 
     try {
-      localStorage.setItem('roomId', roomId)
       const { error } = await joinPoll(roomId, name)
 
       if (error) {
         setError(error.message || 'Failed to join room')
+        setDisabled(false)
         return
       }
+      
+      localStorage.setItem('roomId', roomId)
 
       idRef.current.value = ''
       joinNameRef.current.value = ''

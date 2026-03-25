@@ -44,24 +44,31 @@ export const RoomDataContextProvider = ({ children }) => {
 
     const docRef = doc(db, 'rooms', roomId)
 
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (!docSnap.exists()) {
+    const unsubscribe = onSnapshot(
+      docRef,
+      (docSnap) => {
+        if (!docSnap.exists()) {
+          dispatch({ type: REDUCER_ACTIONS.FAILURE })
+          return
+        }
+
+        const data = docSnap.data()
+        if (!data?.poll) {
+          dispatch({ type: REDUCER_ACTIONS.FAILURE })
+          return
+        }
+
+        // Skip local-only snapshots to avoid flicker from stale data
+        if (docSnap.metadata.hasPendingWrites) return
+
+        const payload = { ...data, userId, roomId }
+        dispatch({ type: REDUCER_ACTIONS.SUCCESS, payload })
+      },
+      (error) => {
+        console.error('Firestore listener error:', error)
         dispatch({ type: REDUCER_ACTIONS.FAILURE })
-        return
       }
-
-      const data = docSnap.data()
-      if (!data?.poll) {
-        dispatch({ type: REDUCER_ACTIONS.FAILURE })
-        return
-      }
-
-      // Skip local-only snapshots to avoid flicker from stale data
-      if (docSnap.metadata.hasPendingWrites) return
-
-      const payload = { ...data, userId, roomId }
-      dispatch({ type: REDUCER_ACTIONS.SUCCESS, payload })
-    })
+    )
 
     return () => unsubscribe()
   }, [roomId, userId])

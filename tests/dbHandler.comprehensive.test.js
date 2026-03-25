@@ -174,6 +174,13 @@ describe('dbHandler – comprehensive test suite', () => {
 
   describe('addPoll', () => {
     it('creates a voting poll with question', async () => {
+      localStorageMock.store.id = 'host123'
+      getDoc.mockResolvedValueOnce(
+        mockDocSnap({
+          host: 'host123',
+          participants: [{ id: 'host123', name: 'Alice' }],
+        })
+      )
       updateDoc.mockResolvedValueOnce()
       const result = await addPoll('room1', [{ option: 'A', votes: 0 }], 'Best color?')
       expect(result.response.success).toBe(true)
@@ -185,6 +192,13 @@ describe('dbHandler – comprehensive test suite', () => {
     })
 
     it('creates an estimation poll when no question provided', async () => {
+      localStorageMock.store.id = 'host123'
+      getDoc.mockResolvedValueOnce(
+        mockDocSnap({
+          host: 'host123',
+          participants: [{ id: 'host123', name: 'Alice' }],
+        })
+      )
       updateDoc.mockResolvedValueOnce()
       const result = await addPoll('room1', [{ option: 1, votes: 0 }])
       expect(result.response.success).toBe(true)
@@ -194,6 +208,13 @@ describe('dbHandler – comprehensive test suite', () => {
     })
 
     it('handles updateDoc failure', async () => {
+      localStorageMock.store.id = 'host123'
+      getDoc.mockResolvedValueOnce(
+        mockDocSnap({
+          host: 'host123',
+          participants: [{ id: 'host123', name: 'Alice' }],
+        })
+      )
       const err = new Error('Write failed')
       updateDoc.mockRejectedValueOnce(err)
       const result = await addPoll('room1', [])
@@ -201,6 +222,13 @@ describe('dbHandler – comprehensive test suite', () => {
     })
 
     it('poll starts with empty voted array and isOpen=true', async () => {
+      localStorageMock.store.id = 'host123'
+      getDoc.mockResolvedValueOnce(
+        mockDocSnap({
+          host: 'host123',
+          participants: [{ id: 'host123', name: 'Alice' }],
+        })
+      )
       updateDoc.mockResolvedValueOnce()
       await addPoll('room1', [{ option: 'X', votes: 0 }], 'Q?')
       const pollArg = updateDoc.mock.calls[0][1].poll
@@ -282,16 +310,44 @@ describe('dbHandler – comprehensive test suite', () => {
 
   describe('closePoll', () => {
     it('closes an open poll', async () => {
-      getDoc.mockResolvedValueOnce(mockDocSnap({ poll: { isOpen: true } }))
-      updateDoc.mockResolvedValueOnce()
+      localStorageMock.store.id = 'host123'
+      
+      runTransaction.mockImplementation(async (_, callback) => {
+        const transaction = {
+          get: vi.fn().mockResolvedValue(
+            mockDocSnap({
+              host: 'host123',
+              poll: { isOpen: true },
+            })
+          ),
+          update: vi.fn(),
+        }
+        await callback(transaction)
+        expect(transaction.update).toHaveBeenCalledWith(expect.anything(), { 'poll.isOpen': false })
+      })
+      
       await closePoll('room1')
-      expect(updateDoc).toHaveBeenCalledWith(expect.anything(), { 'poll.isOpen': false })
     })
 
     it('skips if poll already closed', async () => {
-      getDoc.mockResolvedValueOnce(mockDocSnap({ poll: { isOpen: false } }))
+      localStorageMock.store.id = 'host123'
+      
+      const mockUpdate = vi.fn()
+      runTransaction.mockImplementation(async (_, callback) => {
+        const transaction = {
+          get: vi.fn().mockResolvedValue(
+            mockDocSnap({
+              host: 'host123',
+              poll: { isOpen: false },
+            })
+          ),
+          update: mockUpdate,
+        }
+        await callback(transaction)
+      })
+      
       await closePoll('room1')
-      expect(updateDoc).not.toHaveBeenCalled()
+      expect(mockUpdate).not.toHaveBeenCalled()
     })
 
     it('throws if roomId is empty', async () => {
@@ -299,17 +355,54 @@ describe('dbHandler – comprehensive test suite', () => {
     })
 
     it('throws if room does not exist', async () => {
-      getDoc.mockResolvedValueOnce(mockDocSnap(null, false))
-      await expect(closePoll('missing')).rejects.toThrow('Room does not exist')
+      localStorageMock.store.id = 'host123'
+      
+      runTransaction.mockImplementation(async (_, callback) => {
+        const transaction = {
+          get: vi.fn().mockResolvedValue(mockDocSnap(null, false)),
+          update: vi.fn(),
+        }
+        await callback(transaction)
+      })
+      
+      await expect(closePoll('room1')).rejects.toThrow('Room does not exist')
     })
 
     it('throws if poll is null', async () => {
-      getDoc.mockResolvedValueOnce(mockDocSnap({ poll: null }))
+      localStorageMock.store.id = 'host123'
+      
+      runTransaction.mockImplementation(async (_, callback) => {
+        const transaction = {
+          get: vi.fn().mockResolvedValue(
+            mockDocSnap({
+              host: 'host123',
+              poll: null,
+            })
+          ),
+          update: vi.fn(),
+        }
+        await callback(transaction)
+      })
+      
       await expect(closePoll('room1')).rejects.toThrow('Poll is missing or malformed')
     })
 
     it('throws if poll is not an object', async () => {
-      getDoc.mockResolvedValueOnce(mockDocSnap({ poll: 'invalid' }))
+      localStorageMock.store.id = 'host123'
+      
+      runTransaction.mockImplementation(async (_, callback) => {
+        const transaction = {
+          get: vi.fn().mockResolvedValue(
+            mockDocSnap({
+              host: 'host123',
+              poll: 'invalid',
+            })
+          ),
+          update: vi.fn(),
+        }
+        await callback(transaction)
+      })
+      
       await expect(closePoll('room1')).rejects.toThrow('Poll is missing or malformed')
     })
   })
@@ -567,6 +660,14 @@ describe('dbHandler – comprehensive test suite', () => {
       }
 
       // Step 3: Host creates poll
+      localStorageMock.store.id = localStorageMock.store.id || 'host-id'
+      const hostId = localStorageMock.store.id
+      getDoc.mockResolvedValueOnce(
+        mockDocSnap({
+          host: hostId,
+          participants: [{ id: hostId, name: 'Host' }],
+        })
+      )
       updateDoc.mockResolvedValueOnce()
       const pollResult = await addPoll(roomId, [
         { option: 'Option A', votes: 0 },
@@ -598,10 +699,22 @@ describe('dbHandler – comprehensive test suite', () => {
       expect(voteRoom.state.poll.options[0].votes + voteRoom.state.poll.options[1].votes).toBe(5)
 
       // Step 5: Host closes poll
-      getDoc.mockResolvedValueOnce(mockDocSnap({ poll: { isOpen: true } }))
-      updateDoc.mockResolvedValueOnce()
+      localStorageMock.store.id = localStorageMock.store.id || 'host-id'
+      runTransaction.mockImplementation(async (_, callback) => {
+        const transaction = {
+          get: vi.fn().mockResolvedValue(
+            mockDocSnap({
+              host: localStorageMock.store.id,
+              poll: { isOpen: true },
+            })
+          ),
+          update: vi.fn(),
+        }
+        await callback(transaction)
+        expect(transaction.update).toHaveBeenCalledWith(expect.anything(), { 'poll.isOpen': false })
+      })
+      
       await closePoll(roomId)
-      expect(updateDoc).toHaveBeenCalledWith(expect.anything(), { 'poll.isOpen': false })
     })
   })
 
@@ -622,11 +735,8 @@ describe('dbHandler – comprehensive test suite', () => {
         })
       )
 
-      // index 5 is out of bounds – the function doesn't guard this, so it'll
-      // try to access undefined. This tests current behavior.
-      await expect(
-        castVote('room1', 5, 'u1', 'Alice')
-      ).rejects.toThrow()
+      // index 5 is out of bounds – now guarded with bounds check
+      await expect(castVote('room1', 5, 'u1', 'Alice')).rejects.toThrow('Invalid option index')
     })
 
     it('joinPoll with empty participants array succeeds', async () => {
@@ -638,9 +748,24 @@ describe('dbHandler – comprehensive test suite', () => {
     })
 
     it('closePoll is idempotent', async () => {
-      getDoc.mockResolvedValueOnce(mockDocSnap({ poll: { isOpen: false } }))
+      localStorageMock.store.id = 'host123'
+      
+      const mockUpdate = vi.fn()
+      runTransaction.mockImplementation(async (_, callback) => {
+        const transaction = {
+          get: vi.fn().mockResolvedValue(
+            mockDocSnap({
+              host: 'host123',
+              poll: { isOpen: false },
+            })
+          ),
+          update: mockUpdate,
+        }
+        await callback(transaction)
+      })
+      
       await closePoll('room1') // should not throw
-      expect(updateDoc).not.toHaveBeenCalled()
+      expect(mockUpdate).not.toHaveBeenCalled()
     })
 
     it('createRoom with special characters in room name', async () => {

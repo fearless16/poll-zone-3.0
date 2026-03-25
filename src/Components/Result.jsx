@@ -38,12 +38,10 @@ function Result() {
   }, [roomId, userId, pollState.loading])
 
   const handleClick = async () => {
-    dispatch({ type: REDUCER_ACTIONS.LOADING })
     setSubmitted(true)
     const totalVotes = pollState.currentPollData.voted.length
     const totalUsers = pollState.roomData.participants.length
     if (totalVotes < totalUsers) {
-      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
       setSubmitted(false)
       setModalOpen(true)
       return
@@ -51,10 +49,9 @@ function Result() {
     try {
       await closePoll(roomId)
       navigate('/create')
-    } catch {
+    } catch (error) {
+      console.error('Failed to close poll:', error)
       setSubmitted(false)
-    } finally {
-      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
     }
   }
 
@@ -130,7 +127,7 @@ function Result() {
                                 Poll is closing...
                               </>
                             ) : (
-                              'New poll'
+                              'Close poll'
                             )}
                           </Button>
                         </Col>
