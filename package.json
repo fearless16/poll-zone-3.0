@@ -13,7 +13,8 @@
     "test": "npx firebase emulators:exec --project poll-zone 'npx vitest run --passWithNoTests'",
     "test:ci": "npx firebase emulators:exec --project poll-zone 'npx vitest run --coverage'",
     "test:watch": "npx firebase emulators:exec --project poll-zone 'npx vitest --watch'",
-    "test:unit": "npx vitest run tests/pollReducer.test.jsx tests/dbHandler.test.js"
+    "test:unit": "npx vitest run tests/pollReducer.test.jsx tests/dbHandler.test.js",
+    "test:no-emulator": "npx vitest run --passWithNoTests"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "6.7.2",
