@@ -139,7 +139,7 @@ function Home() {
                   required
                 />
               </div>
-              <Button type="submit" variant="primary" className="w-100 py-2" disabled={disabled}>
+              <Button type="submit" variant="dark" className="w-100 py-2" disabled={disabled}>
                 {disabled ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" />

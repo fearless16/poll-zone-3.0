@@ -687,9 +687,9 @@ describe('E2E Flow Tests', () => {
       expect(screen.getAllByText('2').length).toBeGreaterThanOrEqual(1)
     })
 
-    it('shows "New poll" button for host when poll is open', () => {
+    it('shows "Close Poll" button for host when poll is open', () => {
       renderWithContext(<Result />, resultContext(), { route: '/result' })
-      expect(screen.getByRole('button', { name: /new poll/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /close poll/i })).toBeInTheDocument()
     })
 
     it('shows "Go to poll" button when poll is open', () => {
@@ -782,7 +782,7 @@ describe('E2E Flow Tests', () => {
         { route: '/result' }
       )
 
-      fireEvent.click(screen.getByRole('button', { name: /new poll/i }))
+      fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
 
       await waitFor(() => {
         expect(mockClosePoll).toHaveBeenCalledWith('r1')
@@ -824,7 +824,7 @@ describe('E2E Flow Tests', () => {
 
       renderWithContext(<Result />, ctx, { route: '/result' })
 
-      fireEvent.click(screen.getByRole('button', { name: /new poll/i }))
+      fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
 
       await waitFor(() => {
         expect(screen.getByText(/all participants have not voted/i)).toBeInTheDocument()
@@ -1231,7 +1231,7 @@ describe('E2E Flow Tests', () => {
       expect(card.style.maxWidth).toBe('36rem')
     })
 
-    it('Result page renders glassmorphism wrapper and actionBar for open poll', () => {
+    it('Result page renders chart, votes and action buttons for open poll', () => {
       storage.roomId = 'ROOM-1'
       storage.id = 'host-1'
 
@@ -1274,8 +1274,8 @@ describe('E2E Flow Tests', () => {
       const badges = container.querySelectorAll('.badge')
       expect(badges.length).toBeGreaterThan(0)
 
-      // New poll button present for host
-      expect(screen.getByRole('button', { name: /new poll/i })).toBeInTheDocument()
+      // Close Poll button present for host
+      expect(screen.getByRole('button', { name: /close poll/i })).toBeInTheDocument()
 
       // Go to poll button present
       expect(screen.getByRole('button', { name: /go to poll/i })).toBeInTheDocument()
@@ -1316,7 +1316,7 @@ describe('E2E Flow Tests', () => {
 
       expect(screen.getByText('Poll has been closed')).toBeInTheDocument()
       // Should NOT have action buttons
-      expect(screen.queryByRole('button', { name: /new poll/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /close poll/i })).not.toBeInTheDocument()
     })
 
     it('SideBar shows "No votes yet" when empty', () => {
@@ -1337,10 +1337,10 @@ describe('E2E Flow Tests', () => {
       expect(screen.getByText('Bob')).toBeInTheDocument()
       expect(screen.getByText('2')).toBeInTheDocument() // voter count badge
 
-      // Green dots use CSS var, not hardcoded 'green'
+      // Green dots
       const dots = container.querySelectorAll('span[style*="borderRadius"]')
       dots.forEach((dot) => {
-        expect(dot.style.backgroundColor).toBe('var(--success-color)')
+        expect(dot.style.backgroundColor).toBe('green')
       })
     })
 
@@ -1379,9 +1379,8 @@ describe('E2E Flow Tests', () => {
 
       const form = container.querySelector('form')
       expect(form).toBeInTheDocument()
-      // Must use var(--card-bg), not 'white' or 'bg-white'
-      expect(form.style.background).toBe('var(--card-bg)')
-      expect(form.className).not.toContain('bg-white')
+      // Uses bg-white class for clean B&W look
+      expect(form.className).toContain('bg-white')
     })
 
     it('PageNotFound renders 404 with modern stacked layout', () => {

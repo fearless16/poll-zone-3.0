@@ -89,8 +89,8 @@ function VotingForm({ pollState, dispatch }) {
       {(clicked || pollState.loading) && <Loader />}
 
       {!clicked && pollState.currentPollData && (
-        <Form onSubmit={handleSubmit} className="p-4 shadow rounded-3 bounceIn mt-4" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-          <h5 className="text-center mb-4 fw-bold" style={{ color: 'var(--text-color)' }}>{question || 'Estimation Poll'}</h5>
+        <Form onSubmit={handleSubmit} className="p-4 bg-white shadow rounded-3 bounceIn mt-4">
+          <h5 className="text-center mb-4 fw-bold">{question || 'Estimation Poll'}</h5>
           <Row>
             <Col xs={12} className="d-flex flex-column gap-3">
               {options.map((option, idx) => (
@@ -112,7 +112,7 @@ function VotingForm({ pollState, dispatch }) {
             <Col xs={12}>
               <Button
                 type="submit"
-                variant="primary"
+                variant="dark"
                 disabled={clicked || !selected}
                 className="w-100 py-3 fs-5 rounded d-flex align-items-center justify-content-center"
               >

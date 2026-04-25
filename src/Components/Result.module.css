@@ -5,66 +5,37 @@
 .resultWrapper {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
   padding: 2rem;
-  width: 100%;
-  max-width: 72rem;
-  margin: 0 auto;
+  width: 90%;
+  max-width: 100%;
+  margin: auto;
 }
 
 .resultCardWrapper {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: var(--border-radius-lg);
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
   padding: 2rem;
-  box-shadow: var(--shadow-xl);
-  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
 }
 
 .chartBox {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 280px;
+  min-height: 250px;
   height: 100%;
   width: 100%;
-  padding: 1rem;
-  background: var(--card-bg);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
-}
-
-.actionBar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.75rem;
-  padding-top: 1rem;
-  margin-top: 0.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.closedBanner {
-  text-align: center;
-  padding: 0.75rem 1rem;
-  margin-top: 0.5rem;
-  border-radius: var(--border-radius);
-  background: var(--border-color);
-  color: var(--muted-text);
-  font-weight: 500;
-  font-size: 0.9rem;
 }
 
 @media (max-width: 767.98px) {
   .chartBox {
     margin-bottom: 1rem;
-    min-height: 220px;
   }
 
   .resultWrapper {
     padding: 1rem;
+    width: 100%;
   }
 
   .resultCardWrapper {

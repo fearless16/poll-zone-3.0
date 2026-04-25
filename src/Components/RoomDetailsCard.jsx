@@ -22,9 +22,7 @@ const RoomDetailsCard = ({ room, isOpen }) => {
   const average = computeAverage(room?.poll?.options || [])
   return (
     <Card className="shadow-sm">
-      <Card.Header className="fw-semibold text-center fs-5">
-        Room Details
-      </Card.Header>
+      <Card.Header as="h4" className="text-center">Room Details</Card.Header>
       <ListGroup variant="flush">
         <ListGroup.Item>
           <Row>
@@ -72,7 +70,7 @@ const RoomDetailsCard = ({ room, isOpen }) => {
               Average
             </Col>
             <Col xs={6} className="text-end">
-              <Badge bg="info" className="px-3" style={{ fontSize: '0.95rem' }}>
+              <Badge bg="danger" className="px-3" style={{ fontSize: '1rem' }}>
                 {average}
               </Badge>
             </Col>

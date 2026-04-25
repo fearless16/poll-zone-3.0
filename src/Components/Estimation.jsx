@@ -51,8 +51,8 @@ function Estimation() {
       )}
 
       {!pollState.loading && (
-        <Card className="border-0 shadow-none">
-          <Card.Body className="px-0">
+        <Card>
+          <Card.Body>
             <Card.Title className="fw-semibold mb-2">Create Estimation Poll</Card.Title>
             <Card.Text className="text-muted mb-3">
               Enter a number between 2–8 to generate Fibonacci options
@@ -73,7 +73,7 @@ function Estimation() {
                   </Form.Group>
                 </Col>
                 <Col xs="auto">
-                  <Button type="submit" variant="primary" disabled={clicked}>
+                  <Button type="submit" variant="dark" disabled={clicked}>
                     {clicked ? 'Loading...' : 'Submit'}
                   </Button>
                 </Col>

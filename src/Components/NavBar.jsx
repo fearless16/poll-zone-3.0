@@ -17,7 +17,7 @@ function NavigationBar() {
   return (
     <Navbar bg="dark" variant="dark" expand="lg" sticky="top" className="py-3 shadow-sm">
       <Container>
-        <Navbar.Brand as={Link} to="/" className="fw-bold text-uppercase text-light">
+        <Navbar.Brand as={Link} to="/" className="fw-bold fs-4 text-uppercase text-light">
           Poll Zone 🔥
         </Navbar.Brand>
 
@@ -34,7 +34,7 @@ function NavigationBar() {
         </div>
 
         <Navbar.Collapse id="main-navbar">
-          <Nav className="ms-auto gap-2">
+          <Nav className="ms-auto gap-3">
             {pollState.isHost && (
               <Nav.Link as={Link} to="/create" className="text-light fw-semibold">
                 Create
