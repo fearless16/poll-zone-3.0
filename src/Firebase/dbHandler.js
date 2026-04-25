@@ -19,8 +19,6 @@ import { v4 as uuidv4 } from 'uuid'
  */
 export const createRoom = async (name, roomName) => {
   const hostId = uuidv4()
-  localStorage.setItem('id', hostId)
-  localStorage.setItem('displayName', name)
 
   const roomDetails = {
     participants: [{ id: hostId, name }],
@@ -33,8 +31,7 @@ export const createRoom = async (name, roomName) => {
   try {
     const res = await addDoc(collection(db, 'rooms'), roomDetails)
     const roomId = res.id
-    localStorage.setItem('roomId', roomId)
-    return { response: { success: true, roomId } }
+    return { response: { success: true, roomId, hostId } }
   } catch (error) {
     return { error }
   }
@@ -47,7 +44,6 @@ export const createRoom = async (name, roomName) => {
  * @returns {Promise<{ response?: object, error?: object }>}
  */
 export const joinPoll = async (roomId, name) => {
-  const id = localStorage.getItem('id')
   const docRef = doc(db, 'rooms', roomId.trim())
 
   try {
@@ -55,18 +51,16 @@ export const joinPoll = async (roomId, name) => {
     if (!snap.exists()) return { error: new Error('Room does not exist') }
 
     const data = snap.data()
-    if (id && data.participants.some((p) => p.id === id)) {
-      return { response: { success: true, data: 'Already a room member' } }
+    const existingId = localStorage.getItem('id')
+    if (existingId && data.participants.some((p) => p.id === existingId)) {
+      return { response: { success: true, userId: existingId, data: 'Already a room member' } }
     }
 
     const userId = uuidv4()
-    localStorage.setItem('id', userId)
-    localStorage.setItem('displayName', name)
     await updateDoc(docRef, {
       participants: arrayUnion({ id: userId, name }),
     })
-    localStorage.setItem('roomId', roomId)
-    return { response: { success: true, data: 'User registered successfully' } }
+    return { response: { success: true, userId, data: 'User registered successfully' } }
   } catch (error) {
     return { error }
   }
@@ -95,56 +89,6 @@ export const addPoll = async (roomId, options, question = '') => {
   } catch (error) {
     return { error }
   }
-}
-
-/**
- * Retrieves data for a specific room from Firestore.
- *
- * @param {string} roomId - The ID of the room to fetch data for.
- * @throws Will throw an error if the Firestore instance is not provided.
- * @returns {Promise<Object>} An object containing the response status and room data if successful,
- *                            or an error if the room is not found or the data is empty.
- */
-export const getRoomData = async (roomId) => {
-  if (!db) throw new Error('Firestore instance is required')
-
-  try {
-    const snap = await getDoc(doc(db, 'rooms', roomId))
-
-    if (!snap.exists()) {
-      return {
-        response: { success: false },
-        error: new Error('Room not found'),
-      }
-    }
-
-    const data = snap.data()
-    if (!data || Object.keys(data).length === 0) {
-      return {
-        response: { success: false },
-        error: new Error('Empty room data'),
-      }
-    }
-
-    return {
-      response: { success: true, data },
-    }
-  } catch (error) {
-    return { error }
-  }
-}
-
-/**
- * Checks if current user already voted
- * @returns {Promise<boolean>}
- */
-export const isVoted = async () => {
-  const roomId = localStorage.getItem('roomId')
-  const userId = localStorage.getItem('id')
-  const snap = await getDoc(doc(db, 'rooms', roomId))
-  const data = snap.data()
-
-  return data?.poll?.voted?.some((v) => v.id === userId) || false
 }
 
 /**

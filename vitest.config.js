@@ -18,7 +18,6 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
       exclude: [
-        'src/Components/**',
         'src/main.jsx',
         'src/App.jsx',
         'tests/**',

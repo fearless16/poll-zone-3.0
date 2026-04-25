@@ -1,39 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Estimation from './Estimation'
 import Voting from './Voting'
 import Loader from './Loader'
-import { useRoomData } from '../Context/useRoomData'
-import { useNavigate } from 'react-router-dom'
+import { useRequireRoom } from '../hooks/useRequireRoom'
 import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 import NoPoll from './NoPoll'
 import { Messages } from '../Utils/constants'
-import { REDUCER_ACTIONS } from '../Utils/constants'
 import { Container, Row, Col, Card } from 'react-bootstrap'
 
 function CreatePoll() {
   const [pollType, setPollType] = useState('est')
-  const { pollState, roomId, setRoomId, userId, setUserId, dispatch } = useRoomData()
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (!roomId || !userId) {
-      const storedRoom = localStorage.getItem('roomId')
-      const storedUser = localStorage.getItem('id')
-      if (storedRoom && storedUser) {
-        setRoomId(storedRoom)
-        setUserId(storedUser)
-      } else {
-        navigate('/')
-      }
-    }
-    return () => {
-      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
-    }
-  }, [])
-
-  useEffect(() => {
-    if ((!roomId || !userId) && !pollState.loading) navigate('/')
-  }, [roomId, userId, pollState.loading])
+  const { pollState } = useRequireRoom()
 
   return (
     <div className="page">

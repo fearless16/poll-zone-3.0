@@ -1,6 +1,6 @@
 import { Button, Container, Row, Col, Card, Badge, ListGroup } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Charts from './Chart'
 import { closePoll } from '../Firebase/dbHandler'
 import Modals from './Modal'
@@ -8,7 +8,7 @@ import Loader from './Loader'
 import SideBar from './SideBar'
 import RoomDetailsCard from './RoomDetailsCard'
 import NoPoll from './NoPoll'
-import { useRoomData } from '../Context/useRoomData'
+import { useRequireRoom } from '../hooks/useRequireRoom'
 import { REDUCER_ACTIONS } from '../Utils/constants'
 import { Messages } from '../Utils/constants'
 import styles from './Result.module.css'
@@ -17,25 +17,7 @@ function Result() {
   const [submitted, setSubmitted] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const navigate = useNavigate()
-  const { pollState, roomId, userId, dispatch, setRoomId, setUserId } = useRoomData()
-
-  useEffect(() => {
-    if (!roomId || !userId) {
-      const storedRoom = localStorage.getItem('roomId')
-      const storedUser = localStorage.getItem('id')
-      if (storedRoom && storedUser) {
-        setRoomId(storedRoom)
-        setUserId(storedUser)
-      } else {
-        navigate('/')
-      }
-    }
-    return () => dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
-  }, [])
-
-  useEffect(() => {
-    if ((!roomId || !userId) && !pollState.loading) navigate('/')
-  }, [roomId, userId, pollState.loading])
+  const { pollState, roomId, dispatch } = useRequireRoom()
 
   const handleClick = async () => {
     dispatch({ type: REDUCER_ACTIONS.LOADING })

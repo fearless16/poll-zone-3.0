@@ -14,7 +14,9 @@ const isHost = ({ host }, userId) => !!userId && host === userId
 export const pollReducer = (state, action) => {
   switch (action.type) {
     case REDUCER_ACTIONS.SUCCESS: {
-      if (state.currentPollData?.lastUpdated > action.payload?.poll?.lastUpdated) {
+      const stateTs = state.currentPollData?.lastUpdated?.seconds ?? 0
+      const payloadTs = action.payload?.poll?.lastUpdated?.seconds ?? 0
+      if (stateTs > payloadTs) {
         return state
       }
       // Preserve optimistic voted=true if same poll (same createdAt).
@@ -38,8 +40,6 @@ export const pollReducer = (state, action) => {
     }
     case REDUCER_ACTIONS.VOTED:
       return { ...state, loading: false, voted: true }
-    case REDUCER_ACTIONS.OPEN:
-      return { ...state, isOpen: true }
     case REDUCER_ACTIONS.LOADING:
       return { ...state, loading: true }
     case REDUCER_ACTIONS.UNSET_LOADING:

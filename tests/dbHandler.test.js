@@ -3,8 +3,6 @@ import {
   createRoom,
   joinPoll,
   addPoll,
-  getRoomData,
-  isVoted,
   closePoll,
   castVote,
 } from '../src/Firebase/dbHandler'
@@ -56,10 +54,8 @@ describe('🔥 dbHandler 100% test suite', () => {
 
       const result = await createRoom('Alice', 'My Room')
 
-      expect(result).toEqual({ response: { success: true, roomId } })
-      expect(localStorage.setItem).toHaveBeenCalledWith('id', 'host123')
-      expect(localStorage.setItem).toHaveBeenCalledWith('displayName', 'Alice')
-      expect(localStorage.setItem).toHaveBeenCalledWith('roomId', roomId)
+      expect(result).toEqual({ response: { success: true, roomId, hostId: 'host123' } })
+      expect(localStorage.setItem).not.toHaveBeenCalled()
     })
 
     it('should handle addDoc error', async () => {
@@ -87,7 +83,9 @@ describe('🔥 dbHandler 100% test suite', () => {
 
       const result = await joinPoll('roomId', 'Bob')
       expect(result.response.success).toBe(true)
+      expect(result.response.userId).toBe('host123')
       expect(updateDoc).toHaveBeenCalled()
+      expect(localStorage.setItem).not.toHaveBeenCalled()
     })
 
     it('should detect existing user', async () => {
@@ -101,6 +99,7 @@ describe('🔥 dbHandler 100% test suite', () => {
 
       const result = await joinPoll('roomId', 'Bob')
       expect(result.response.data).toBe('Already a room member')
+      expect(result.response.userId).toBe('id123')
     })
 
     it('should handle room not found', async () => {
@@ -136,61 +135,6 @@ describe('🔥 dbHandler 100% test suite', () => {
       updateDoc.mockRejectedValueOnce(error)
       const result = await addPoll('room1', [])
       expect(result).toEqual({ error })
-    })
-  })
-
-  describe('getRoomData', () => {
-    it('should return room data', async () => {
-      getDoc.mockResolvedValueOnce(mockDocSnap({ foo: 'bar' }))
-      const result = await getRoomData('room1')
-      expect(result.response.success).toBe(true)
-    })
-
-    it('should handle room not found', async () => {
-      getDoc.mockResolvedValueOnce(mockDocSnap(null, false))
-      const result = await getRoomData('room1')
-      expect(result.response.success).toBe(false)
-    })
-
-    it('should handle empty room', async () => {
-      getDoc.mockResolvedValueOnce(mockDocSnap({}, true))
-      const result = await getRoomData('room1')
-      expect(result.response.success).toBe(false)
-    })
-
-    it('should handle error', async () => {
-      const error = new Error('Fail')
-      getDoc.mockRejectedValueOnce(error)
-      const result = await getRoomData('room1')
-      expect(result).toEqual({ error })
-    })
-  })
-
-  describe('isVoted', () => {
-    it('should return true if user voted', async () => {
-      localStorageMock.getItem.mockImplementation((key) =>
-        key === 'roomId' ? 'r1' : key === 'id' ? 'u1' : null
-      )
-      getDoc.mockResolvedValueOnce(
-        mockDocSnap({
-          poll: { voted: [{ id: 'u1' }] },
-        })
-      )
-      const result = await isVoted()
-      expect(result).toBe(true)
-    })
-
-    it('should return false if not voted', async () => {
-      localStorageMock.getItem.mockImplementation((key) =>
-        key === 'roomId' ? 'r1' : key === 'id' ? 'u1' : null
-      )
-      getDoc.mockResolvedValueOnce(
-        mockDocSnap({
-          poll: { voted: [] },
-        })
-      )
-      const result = await isVoted()
-      expect(result).toBe(false)
     })
   })
 

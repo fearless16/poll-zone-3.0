@@ -8,12 +8,12 @@ const basePoll = {
   voted: [{ id: 'user-321' }],
   options: [],
   question: 'Kya haal hai?',
-  lastUpdated: 9999,
+  lastUpdated: { seconds: 9999 },
 }
 
 const baseState = {
   loading: false,
-  currentPollData: { lastUpdated: 9998 },
+  currentPollData: { lastUpdated: { seconds: 9998 } },
   roomData: {},
   error: '',
   isHost: false,
@@ -27,14 +27,14 @@ describe('pollReducer', () => {
 
   beforeEach(() => {
     payload = {
-      poll: { ...basePoll, lastUpdated: 9999 },
+      poll: { ...basePoll, lastUpdated: { seconds: 9999 } },
       host: mockUserId,
       userId: mockUserId,
     }
   })
 
   it('should return same state if payload is older than current state', () => {
-    const olderPayload = { ...payload, poll: { ...basePoll, lastUpdated: 9000 } }
+    const olderPayload = { ...payload, poll: { ...basePoll, lastUpdated: { seconds: 9000 } } }
     const result = pollReducer(baseState, { type: REDUCER_ACTIONS.SUCCESS, payload: olderPayload })
     expect(result).toEqual(baseState)
   })
@@ -54,11 +54,6 @@ describe('pollReducer', () => {
     payload.poll.voted.push({ id: mockUserId })
     const result = pollReducer(baseState, { type: REDUCER_ACTIONS.SUCCESS, payload })
     expect(result.voted).toBe(true)
-  })
-
-  it('should handle OPEN action', () => {
-    const result = pollReducer(baseState, { type: REDUCER_ACTIONS.OPEN })
-    expect(result.isOpen).toBe(true)
   })
 
   it('should handle LOADING action', () => {
@@ -107,7 +102,7 @@ describe('pollReducer', () => {
         ...basePoll,
         voted: [{ id: 'user-321' }, { id: 'user-other' }],
         createdAt: { seconds: 5000 },
-        lastUpdated: 10000,
+        lastUpdated: { seconds: 10000 },
       },
       host: 'host-1',
       userId: mockUserId,
@@ -133,7 +128,7 @@ describe('pollReducer', () => {
         ...basePoll,
         voted: [],
         createdAt: { seconds: 9000 },
-        lastUpdated: 11000,
+        lastUpdated: { seconds: 11000 },
       },
       host: 'host-1',
       userId: mockUserId,

@@ -49,6 +49,8 @@ function Home() {
         return
       }
 
+      localStorage.setItem('id', response.hostId)
+      localStorage.setItem('displayName', name)
       localStorage.setItem('roomId', response.roomId)
       setRoomId(response.roomId)
       createNameRef.current.value = ''
@@ -81,13 +83,15 @@ function Home() {
 
     try {
       localStorage.setItem('roomId', roomId)
-      const { error } = await joinPoll(roomId, name)
+      const { response, error } = await joinPoll(roomId, name)
 
       if (error) {
         setError(error.message || 'Failed to join room')
         return
       }
 
+      localStorage.setItem('id', response.userId)
+      localStorage.setItem('displayName', name)
       idRef.current.value = ''
       joinNameRef.current.value = ''
       navigate('/poll')

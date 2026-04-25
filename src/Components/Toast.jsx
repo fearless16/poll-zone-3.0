@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Toast from 'react-bootstrap/Toast'
+import { Button } from 'react-bootstrap'
 
 /**
  * ToastComponent
@@ -12,10 +14,29 @@ import Toast from 'react-bootstrap/Toast'
  */
 function ToastComponent({ show, setShow, roomId }) {
   const navigate = useNavigate()
+  const [copied, setCopied] = useState(false)
 
   const toggleShow = () => {
     setShow(false)
     navigate('/create')
+  }
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(roomId)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Fallback for non-HTTPS or denied permissions
+      const textArea = document.createElement('textarea')
+      textArea.value = roomId
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   return (
@@ -25,9 +46,18 @@ function ToastComponent({ show, setShow, roomId }) {
     >
       <Toast show={show} onClose={toggleShow} animation>
         <Toast.Header>
-          <strong className="me-auto">Copy Room ID</strong>
+          <strong className="me-auto">Room ID</strong>
         </Toast.Header>
-        <Toast.Body>{roomId}</Toast.Body>
+        <Toast.Body className="d-flex justify-content-between align-items-center">
+          <span className="font-monospace">{roomId}</span>
+          <Button
+            size="sm"
+            variant={copied ? 'success' : 'outline-dark'}
+            onClick={handleCopy}
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </Button>
+        </Toast.Body>
       </Toast>
     </div>
   )

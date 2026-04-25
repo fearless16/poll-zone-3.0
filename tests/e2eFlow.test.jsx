@@ -60,8 +60,6 @@ vi.mock('../src/Firebase/dbHandler', () => ({
   addPoll: (...args) => mockAddPoll(...args),
   closePoll: (...args) => mockClosePoll(...args),
   castVote: (...args) => mockCastVote(...args),
-  isVoted: vi.fn().mockResolvedValue(false),
-  getRoomData: vi.fn(),
 }))
 
 // ─── Chart.js Mock (canvas not available in jsdom) ─────────────────
@@ -147,7 +145,7 @@ describe('E2E Flow Tests', () => {
   describe('Host Create Room Flow', () => {
     it('creates room and shows toast with room ID', async () => {
       mockCreateRoom.mockResolvedValueOnce({
-        response: { success: true, roomId: 'ROOM-ABC' },
+        response: { success: true, roomId: 'ROOM-ABC', hostId: 'host-1' },
       })
 
       renderWithRouter(
@@ -176,7 +174,7 @@ describe('E2E Flow Tests', () => {
 
       await waitFor(() => {
         expect(screen.getByText('ROOM-ABC')).toBeInTheDocument()
-        expect(screen.getByText(/copy room id/i)).toBeInTheDocument()
+        expect(screen.getByText(/room id/i)).toBeInTheDocument()
       })
     })
 
@@ -271,7 +269,7 @@ describe('E2E Flow Tests', () => {
   describe('Join Room Flow', () => {
     it('joins room and navigates to /poll', async () => {
       mockJoinPoll.mockResolvedValueOnce({
-        response: { success: true, data: 'User registered successfully' },
+        response: { success: true, userId: 'user-1', data: 'User registered successfully' },
       })
 
       renderWithRouter(
@@ -963,7 +961,7 @@ describe('E2E Flow Tests', () => {
       storage.roomId = 'room-1'
 
       mockCreateRoom.mockResolvedValueOnce({
-        response: { success: true, roomId: 'room-1' },
+        response: { success: true, roomId: 'room-1', hostId: 'host-1' },
       })
 
       // Simulate Firestore snapshot for CreatePoll page

@@ -1,33 +1,12 @@
-import { useRoomData } from '../Context/useRoomData'
-import { useEffect } from 'react'
+import { useRequireRoom } from '../hooks/useRequireRoom'
 import VotingForm from './Forms/VotingForm'
 import Loader from './Loader'
-import { useNavigate } from 'react-router-dom'
 import NoPoll from './NoPoll'
-import { Messages, REDUCER_ACTIONS } from '../Utils/constants'
+import { Messages } from '../Utils/constants'
 import { Container, Row, Col } from 'react-bootstrap'
 
 const PollPage = () => {
-  const { pollState, roomId, dispatch, setRoomId, userId, setUserId } = useRoomData()
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (!roomId || !userId) {
-      const storedRoom = localStorage.getItem('roomId')
-      const storedUser = localStorage.getItem('id')
-      if (storedRoom && storedUser) {
-        setRoomId(storedRoom)
-        setUserId(storedUser)
-      } else {
-        navigate('/')
-      }
-    }
-    return () => dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
-  }, [])
-
-  useEffect(() => {
-    if ((!roomId || !userId) && !pollState.loading) navigate('/')
-  }, [roomId, userId, pollState.loading])
+  const { pollState, dispatch } = useRequireRoom()
 
   const renderPollState = () => {
     const { isHost, isPoll, isOpen, voted } = pollState

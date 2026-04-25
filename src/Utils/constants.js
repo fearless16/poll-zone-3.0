@@ -1,6 +1,6 @@
 export const Messages = {
   NO_POLL_DATA_TO_SHOW: {
-    message: 'No poll data show',
+    message: 'No poll data to show',
     linkMessage: 'Go to poll',
     path: '/poll',
   },
@@ -10,7 +10,7 @@ export const Messages = {
     path: '/result',
   },
   CREATE_POLL: {
-    message: 'No poll present ',
+    message: 'No poll present',
     linkMessage: 'create one',
     path: '/create',
   },
@@ -40,6 +40,4 @@ export const REDUCER_ACTIONS = {
   FAILURE: 'FAILURE',
   VOTED: 'VOTED',
   UNSET_LOADING: 'UNSET_LOADING',
-  OPEN: 'OPEN',
-  ROOM_EXPIRED: 'ROOM_EXPIRED',
 }
