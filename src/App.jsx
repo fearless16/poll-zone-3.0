@@ -1,6 +1,6 @@
 import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router'
 import PollPage from './Components/PollPage'
 import Result from './Components/Result'
 import Home from './Components/Home'

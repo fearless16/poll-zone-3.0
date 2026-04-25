@@ -66,9 +66,9 @@ if [ ! -f "$FIREBASE_CONFIG_FILE" ]; then
 EOF
 fi
 
-# 5. Build the project using Bun & Vite
+# 5. Build the project using Vite
 echo "🛠️ Building Vite app..."
-bunx vite build
+npx vite build
 
 # 6. Deploy hosting + firestore
 echo "🚀 Deploying to Firebase..."

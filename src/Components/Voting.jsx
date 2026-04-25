@@ -1,10 +1,9 @@
 import { useState, useRef } from 'react'
 import { addPoll } from '../Firebase/dbHandler'
 import { useRoomData } from '../Context/useRoomData'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { Card, Button, Alert, Form, Row, Col } from 'react-bootstrap'
 import { REDUCER_ACTIONS } from '../Utils/constants'
-import Loader from './Loader'
 
 function Voting() {
   const [numberOfOptions, setNumberOfOptions] = useState(4)
@@ -57,24 +56,22 @@ function Voting() {
       return
     }
 
-    try {
-      const roomId = localStorage.getItem('roomId')
-      await addPoll(roomId, options, question)
-      dispatch({ type: REDUCER_ACTIONS.POLL_CREATED })
-      navigate('/poll')
-    } catch {
+    const roomId = localStorage.getItem('roomId')
+    const { error } = await addPoll(roomId, options, question)
+    if (error) {
       dispatch({ type: REDUCER_ACTIONS.FAILURE })
       setClicked(false)
       navigate('/create')
+    } else {
+      dispatch({ type: REDUCER_ACTIONS.POLL_CREATED })
+      navigate('/poll')
     }
   }
 
   return (
     <>
-      {/* {(pollState.loading || clicked) && <Loader />} */}
       {!pollState.loading && (
         <Card>
-          {' '}
           <Card.Body>
             <Card.Title className="fw-semibold mb-3">Create Question Poll</Card.Title>
 

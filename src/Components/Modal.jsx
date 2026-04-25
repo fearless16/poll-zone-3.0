@@ -21,15 +21,14 @@ const Modals = ({ setModalOpen, modalOpen, setSubmitted, roomId, navigate }) => 
   const handleSubmit = async () => {
     if (!roomId) return
 
-    try {
-      setLoading(true)
-      await closePoll(roomId)
-      navigate('/create')
-    } catch (err) {
+    setLoading(true)
+    const { error } = await closePoll(roomId)
+    if (error) {
       setSubmitted(false)
-    } finally {
-      setLoading(false)
+    } else {
+      navigate('/create')
     }
+    setLoading(false)
   }
 
   return (

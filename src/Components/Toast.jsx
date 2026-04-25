@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import Toast from 'react-bootstrap/Toast'
 import { Button } from 'react-bootstrap'
 

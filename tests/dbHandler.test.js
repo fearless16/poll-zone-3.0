@@ -142,24 +142,33 @@ describe('🔥 dbHandler 100% test suite', () => {
     it('should close poll if open', async () => {
       getDoc.mockResolvedValueOnce(mockDocSnap({ poll: { isOpen: true } }))
       updateDoc.mockResolvedValueOnce()
-      await closePoll('room1')
+      const result = await closePoll('room1')
+      expect(result.response.success).toBe(true)
       expect(updateDoc).toHaveBeenCalled()
     })
 
-    it('should skip if poll already closed', async () => {
+    it('should return success if poll already closed', async () => {
       getDoc.mockResolvedValueOnce(mockDocSnap({ poll: { isOpen: false } }))
-      await closePoll('room1')
+      const result = await closePoll('room1')
+      expect(result.response.success).toBe(true)
       expect(updateDoc).not.toHaveBeenCalled()
     })
 
-    it('should throw if room not found', async () => {
+    it('should return error if room not found', async () => {
       getDoc.mockResolvedValueOnce(mockDocSnap(null, false))
-      await expect(closePoll('room1')).rejects.toThrow('Room does not exist')
+      const result = await closePoll('room1')
+      expect(result.error.message).toBe('Room does not exist')
     })
 
-    it('should throw if poll is malformed', async () => {
+    it('should return error if poll is malformed', async () => {
       getDoc.mockResolvedValueOnce(mockDocSnap({ poll: null }, true))
-      await expect(closePoll('room1')).rejects.toThrow('Poll is missing or malformed')
+      const result = await closePoll('room1')
+      expect(result.error.message).toBe('Poll is missing or malformed')
+    })
+
+    it('should return error if roomId is missing', async () => {
+      const result = await closePoll('')
+      expect(result.error.message).toBe('Room ID is required')
     })
   })
 
@@ -181,7 +190,8 @@ describe('🔥 dbHandler 100% test suite', () => {
         })
       })
 
-      await castVote('room1', 0, 'u1', 'Alice')
+      const result = await castVote('room1', 0, 'u1', 'Alice')
+      expect(result.response.success).toBe(true)
       expect(update).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
@@ -192,17 +202,18 @@ describe('🔥 dbHandler 100% test suite', () => {
       )
     })
 
-    it('should throw if room missing', async () => {
+    it('should return error if room missing', async () => {
       runTransaction.mockImplementationOnce(async (_, cb) => {
         return cb({
           get: vi.fn().mockResolvedValueOnce(mockDocSnap(null, false)),
           update: vi.fn(),
         })
       })
-      await expect(castVote('room1', 0, 'u1', 'Alice')).rejects.toThrow('Room does not exist')
+      const result = await castVote('room1', 0, 'u1', 'Alice')
+      expect(result.error.message).toBe('Room does not exist')
     })
 
-    it('should throw if poll closed', async () => {
+    it('should return error if poll closed', async () => {
       runTransaction.mockImplementationOnce(async (_, cb) => {
         return cb({
           get: vi.fn().mockResolvedValueOnce(
@@ -213,10 +224,11 @@ describe('🔥 dbHandler 100% test suite', () => {
           update: vi.fn(),
         })
       })
-      await expect(castVote('room1', 0, 'u1', 'Alice')).rejects.toThrow('Poll is closed')
+      const result = await castVote('room1', 0, 'u1', 'Alice')
+      expect(result.error.message).toBe('Poll is closed')
     })
 
-    it('should throw if user already voted', async () => {
+    it('should return error if user already voted', async () => {
       runTransaction.mockImplementationOnce(async (_, cb) => {
         return cb({
           get: vi.fn().mockResolvedValueOnce(
@@ -231,7 +243,8 @@ describe('🔥 dbHandler 100% test suite', () => {
           update: vi.fn(),
         })
       })
-      await expect(castVote('room1', 0, 'u1', 'Alice')).rejects.toThrow('Already voted')
+      const result = await castVote('room1', 0, 'u1', 'Alice')
+      expect(result.error.message).toBe('Already voted')
     })
   })
 })
