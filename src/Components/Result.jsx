@@ -62,32 +62,30 @@ function Result() {
 
           <RoomDetailsCard room={pollState.roomData} isOpen={pollState.currentPollData.isOpen} />
 
-          <Card className={styles.resultCardWrapper}>
+          <div className={styles.resultCardWrapper}>
             <Container fluid>
-              <Row className="g-3">
-                <Col xs={12} md={9}>
-                  <Row className="g-3">
-                    <Col xs={12} md={7}>
+              <Row className="g-4">
+                <Col xs={12} md={8}>
+                  <Row className="g-4">
+                    <Col xs={12} lg={7}>
                       <div className={styles.chartBox}>
                         <Charts chartData={pollState.currentPollData} />
                       </div>
                     </Col>
 
-                    <Col xs={12} md={5}>
-                      <Card className="border-0" style={{ background: 'var(--card-bg)' }}>
-                        <Card.Header className="fw-semibold text-center" style={{ background: 'var(--border-color)', color: 'var(--text-color)' }}>Votes</Card.Header>
-                        <Card.Body>
+                    <Col xs={12} lg={5}>
+                      <Card className="h-100 border-0 shadow-sm">
+                        <Card.Header className="fw-semibold text-center">Votes</Card.Header>
+                        <Card.Body className="p-0">
                           <ListGroup variant="flush">
                             {pollState.currentPollData.options.map((opt, idx) => (
-                              <ListGroup.Item key={idx} className="d-flex justify-content-between" style={{ background: 'var(--card-bg)', color: 'var(--text-color)', borderColor: 'var(--border-color)' }}>
-                                <span>{opt.option}</span>
+                              <ListGroup.Item key={idx} className="d-flex justify-content-between align-items-center px-3 py-2">
+                                <span className="fw-medium">{opt.option}</span>
                                 <Badge
-                                  bg="dark"
-                                  style={{
-                                    fontSize: '1rem',
-                                    borderRadius: '1.5rem',
-                                    width: '3rem',
-                                  }}
+                                  bg="primary"
+                                  pill
+                                  className="px-3 py-2"
+                                  style={{ fontSize: '0.9rem', minWidth: '2.5rem' }}
                                 >
                                   {opt.votes}
                                 </Badge>
@@ -97,49 +95,37 @@ function Result() {
                         </Card.Body>
                       </Card>
                     </Col>
-
-                    <Row className="my-4 justify-content-center g-3">
-                      {pollState.isOpen && pollState.isHost && (
-                        <Col xs="auto">
-                          <Button onClick={handleClick} disabled={submitted} variant="danger">
-                            {submitted ? (
-                              <>
-                                <span
-                                  className="spinner-border spinner-border-sm me-2"
-                                  role="status"
-                                  aria-hidden="true"
-                                />
-                                Poll is closing...
-                              </>
-                            ) : (
-                              'New poll'
-                            )}
-                          </Button>
-                        </Col>
-                      )}
-                      {pollState.isOpen && (
-                        <Col xs="auto">
-                          <Button onClick={() => navigate('/poll')} variant="secondary">
-                            Go to poll
-                          </Button>
-                        </Col>
-                      )}
-                    </Row>
-
-                    {!pollState.isOpen && (
-                      <Row>
-                        <Col className="text-center" style={{ color: 'var(--muted-text)' }}>Poll has been closed</Col>
-                      </Row>
-                    )}
                   </Row>
+
+                  {pollState.isOpen ? (
+                    <div className={styles.actionBar}>
+                      {pollState.isHost && (
+                        <Button onClick={handleClick} disabled={submitted} variant="danger" size="lg">
+                          {submitted ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
+                              Closing...
+                            </>
+                          ) : (
+                            'New poll'
+                          )}
+                        </Button>
+                      )}
+                      <Button onClick={() => navigate('/poll')} variant="outline-primary" size="lg">
+                        Go to poll
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className={styles.closedBanner}>Poll has been closed</div>
+                  )}
                 </Col>
 
-                <Col xs={12} md={3}>
+                <Col xs={12} md={4}>
                   <SideBar voted={pollState.currentPollData.voted} />
                 </Col>
               </Row>
             </Container>
-          </Card>
+          </div>
         </main>
       )}
     </div>

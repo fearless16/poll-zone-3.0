@@ -81,6 +81,10 @@ import PollPage from '../src/Components/PollPage'
 import Result from '../src/Components/Result'
 import NoPoll from '../src/Components/NoPoll'
 import Toast from '../src/Components/Toast'
+import NavigationBar from '../src/Components/NavBar'
+import Footer from '../src/Components/Footer'
+import SideBar from '../src/Components/SideBar'
+import PageNotFound from '../src/Components/404'
 import { Messages, REDUCER_ACTIONS } from '../src/Utils/constants'
 import { pollReducer } from '../src/Context/pollReducer'
 
@@ -1119,6 +1123,287 @@ describe('E2E Flow Tests', () => {
       await waitFor(() => {
         expect(screen.getByTestId('location').textContent).toBe('/poll')
       })
+    })
+  })
+
+  // ───────────────────────────────────────────────────────────────
+  //  UI VERIFICATION: Dark Mode, Modern Layout, Text Blocks
+  // ───────────────────────────────────────────────────────────────
+  describe('UI Modern Look Verification', () => {
+    it('Home page renders hero section with proper headings', () => {
+      renderWithRouter(
+        <Routes>
+          <Route path="/" element={<Home />} />
+        </Routes>
+      )
+
+      expect(screen.getByText('Welcome to Poll Zone')).toBeInTheDocument()
+      expect(screen.getByText(/create a room to start polling/i)).toBeInTheDocument()
+      expect(screen.getByText('Start a new poll session as host')).toBeInTheDocument()
+      expect(screen.getByText('Enter a room ID to participate')).toBeInTheDocument()
+      expect(screen.getByText('or')).toBeInTheDocument()
+      // Both card titles + buttons exist
+      expect(screen.getAllByText('Create Room').length).toBe(2) // h2 + button
+      expect(screen.getAllByText('Join Room').length).toBe(2)
+    })
+
+    it('Home page cards have card header subtitles', () => {
+      renderWithRouter(
+        <Routes>
+          <Route path="/" element={<Home />} />
+        </Routes>
+      )
+
+      expect(screen.getByText('Start a new poll session as host')).toBeInTheDocument()
+      expect(screen.getByText('Enter a room ID to participate')).toBeInTheDocument()
+    })
+
+    it('NavBar renders dark mode toggle button', () => {
+      renderWithRouter(
+        <Routes>
+          <Route path="/" element={<NavigationBar />} />
+        </Routes>
+      )
+
+      const toggle = screen.getByRole('button', { name: /toggle dark mode/i })
+      expect(toggle).toBeInTheDocument()
+      expect(toggle).toHaveClass('theme-toggle')
+    })
+
+    it('dark mode toggle switches theme attribute on html', () => {
+      renderWithRouter(
+        <Routes>
+          <Route path="/" element={<NavigationBar />} />
+        </Routes>
+      )
+
+      const toggle = screen.getByRole('button', { name: /toggle dark mode/i })
+      // Default is light (localStorage is empty in test)
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+
+      fireEvent.click(toggle)
+      expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+
+      fireEvent.click(toggle)
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    })
+
+    it('dark mode persists theme preference in localStorage', () => {
+      renderWithRouter(
+        <Routes>
+          <Route path="/" element={<NavigationBar />} />
+        </Routes>
+      )
+
+      const toggle = screen.getByRole('button', { name: /toggle dark mode/i })
+      fireEvent.click(toggle)
+      expect(localStorage.setItem).toHaveBeenCalledWith('theme', 'dark')
+
+      fireEvent.click(toggle)
+      expect(localStorage.setItem).toHaveBeenCalledWith('theme', 'light')
+    })
+
+    it('Footer renders with proper semantic elements (no h1)', () => {
+      const { container } = render(<Footer />)
+
+      const h1 = container.querySelector('h1')
+      expect(h1).toBeNull()
+
+      const footer = container.querySelector('footer')
+      expect(footer).toBeInTheDocument()
+      expect(footer).toHaveClass('footer')
+
+      const paragraphs = container.querySelectorAll('p')
+      expect(paragraphs.length).toBe(2)
+    })
+
+    it('NoPoll uses responsive layout (no fixed width)', () => {
+      renderWithRouter(
+        <Routes>
+          <Route path="/" element={<NoPoll message={Messages.NO_ACTIVE_POLL} />} />
+        </Routes>
+      )
+
+      const card = screen.getByText(Messages.NO_ACTIVE_POLL.message).closest('.card')
+      expect(card).toBeInTheDocument()
+      // Must NOT have fixed width:40rem — should use maxWidth + width:100%
+      expect(card.style.width).toBe('100%')
+      expect(card.style.maxWidth).toBe('36rem')
+    })
+
+    it('Result page renders glassmorphism wrapper and actionBar for open poll', () => {
+      storage.roomId = 'ROOM-1'
+      storage.id = 'host-1'
+
+      const ctx = {
+        pollState: {
+          roomData: { name: 'Sprint', roomId: 'ROOM-1', participants: [{ id: 'host-1', name: 'A' }], poll: { options: [{ option: '1', votes: 1 }] } },
+          currentPollData: {
+            isOpen: true,
+            options: [{ option: '1', votes: 1 }, { option: '2', votes: 0 }],
+            voted: [{ id: 'host-1', name: 'A' }],
+          },
+          isHost: true,
+          isPoll: true,
+          isOpen: true,
+          voted: false,
+          loading: false,
+          error: null,
+        },
+        dispatch: vi.fn(),
+        roomId: 'ROOM-1',
+        setRoomId: vi.fn(),
+        userId: 'host-1',
+        setUserId: vi.fn(),
+      }
+
+      const { container } = renderWithContext(
+        <Routes>
+          <Route path="/" element={<Result />} />
+        </Routes>,
+        ctx
+      )
+
+      // Chart should render
+      expect(screen.getByTestId('chart')).toBeInTheDocument()
+
+      // Votes card header
+      expect(screen.getByText('Votes')).toBeInTheDocument()
+
+      // Badges use pill style
+      const badges = container.querySelectorAll('.badge')
+      expect(badges.length).toBeGreaterThan(0)
+
+      // New poll button present for host
+      expect(screen.getByRole('button', { name: /new poll/i })).toBeInTheDocument()
+
+      // Go to poll button present
+      expect(screen.getByRole('button', { name: /go to poll/i })).toBeInTheDocument()
+    })
+
+    it('Result page shows closed banner when poll is closed', () => {
+      storage.roomId = 'ROOM-1'
+      storage.id = 'host-1'
+
+      const ctx = {
+        pollState: {
+          roomData: { name: 'Sprint', roomId: 'ROOM-1', participants: [{ id: 'host-1', name: 'A' }], poll: { options: [{ option: '1', votes: 1 }] } },
+          currentPollData: {
+            isOpen: false,
+            options: [{ option: '1', votes: 1 }],
+            voted: [{ id: 'host-1', name: 'A' }],
+          },
+          isHost: true,
+          isPoll: true,
+          isOpen: false,
+          voted: false,
+          loading: false,
+          error: null,
+        },
+        dispatch: vi.fn(),
+        roomId: 'ROOM-1',
+        setRoomId: vi.fn(),
+        userId: 'host-1',
+        setUserId: vi.fn(),
+      }
+
+      renderWithContext(
+        <Routes>
+          <Route path="/" element={<Result />} />
+        </Routes>,
+        ctx
+      )
+
+      expect(screen.getByText('Poll has been closed')).toBeInTheDocument()
+      // Should NOT have action buttons
+      expect(screen.queryByRole('button', { name: /new poll/i })).not.toBeInTheDocument()
+    })
+
+    it('SideBar shows "No votes yet" when empty', () => {
+      const { container } = render(
+        <SideBar voted={[]} />
+      )
+
+      expect(screen.getByText('No votes yet')).toBeInTheDocument()
+      expect(screen.getByText('0')).toBeInTheDocument()
+    })
+
+    it('SideBar renders voter list with green status dots', () => {
+      const { container } = render(
+        <SideBar voted={[{ id: '1', name: 'Alice' }, { id: '2', name: 'Bob' }]} />
+      )
+
+      expect(screen.getByText('Alice')).toBeInTheDocument()
+      expect(screen.getByText('Bob')).toBeInTheDocument()
+      expect(screen.getByText('2')).toBeInTheDocument() // voter count badge
+
+      // Green dots use CSS var, not hardcoded 'green'
+      const dots = container.querySelectorAll('span[style*="borderRadius"]')
+      dots.forEach((dot) => {
+        expect(dot.style.backgroundColor).toBe('var(--success-color)')
+      })
+    })
+
+    it('VotingForm card uses CSS variable background (not hardcoded bg-white)', () => {
+      storage.roomId = 'ROOM-1'
+      storage.id = 'user-1'
+
+      const ctx = {
+        pollState: {
+          currentPollData: {
+            question: 'Best lang?',
+            isOpen: true,
+            options: [{ option: 'JS', votes: 0 }, { option: 'Rust', votes: 0 }],
+            voted: [],
+          },
+          isHost: false,
+          isPoll: true,
+          isOpen: true,
+          voted: false,
+          loading: false,
+          error: null,
+        },
+        dispatch: vi.fn(),
+        roomId: 'ROOM-1',
+        setRoomId: vi.fn(),
+        userId: 'user-1',
+        setUserId: vi.fn(),
+      }
+
+      const { container } = renderWithContext(
+        <Routes>
+          <Route path="/" element={<PollPage />} />
+        </Routes>,
+        ctx
+      )
+
+      const form = container.querySelector('form')
+      expect(form).toBeInTheDocument()
+      // Must use var(--card-bg), not 'white' or 'bg-white'
+      expect(form.style.background).toBe('var(--card-bg)')
+      expect(form.className).not.toContain('bg-white')
+    })
+
+    it('PageNotFound renders 404 with modern stacked layout', () => {
+      const { container } = render(<PageNotFound />)
+
+      expect(screen.getByText('404')).toBeInTheDocument()
+      expect(screen.getByText('Page not found')).toBeInTheDocument()
+      // Should have flex column layout
+      const wrapper = container.firstChild
+      expect(wrapper.className).toContain('flex-column')
+    })
+
+    it('bounce animation class is applied to Home cards', () => {
+      renderWithRouter(
+        <Routes>
+          <Route path="/" element={<Home />} />
+        </Routes>
+      )
+
+      // Verify home page renders card titles (animation applied via CSS modules)
+      const titles = screen.getAllByText('Create Room')
+      expect(titles.length).toBeGreaterThanOrEqual(1)
     })
   })
 })

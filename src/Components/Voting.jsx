@@ -72,10 +72,10 @@ function Voting() {
     <>
       {/* {(pollState.loading || clicked) && <Loader />} */}
       {!pollState.loading && (
-        <Card className="border-0 shadow-none" style={{ background: 'transparent' }}>
+        <Card className="border-0 shadow-none">
           {' '}
           <Card.Body className="px-0">
-            <Card.Title className="fw-semibold mb-3" style={{ color: 'var(--text-color)' }}>Create Question Poll</Card.Title>
+            <Card.Title className="fw-semibold mb-3">Create Question Poll</Card.Title>
 
             {error && <Alert variant="danger">{error}</Alert>}
 
@@ -112,7 +112,7 @@ function Voting() {
                   </Button>
                 </Col>
                 <Col xs="auto">
-                  <Button variant="dark" type="submit" size="md" disabled={clicked}>
+                  <Button variant="primary" type="submit" size="md" disabled={clicked}>
                     {clicked ? 'Submitting...' : 'Submit'}
                   </Button>
                 </Col>

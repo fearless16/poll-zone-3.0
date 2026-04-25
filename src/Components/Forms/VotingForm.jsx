@@ -89,7 +89,7 @@ function VotingForm({ pollState, dispatch }) {
       {(clicked || pollState.loading) && <Loader />}
 
       {!clicked && pollState.currentPollData && (
-        <Form onSubmit={handleSubmit} className="p-4 shadow-sm rounded-3 bounceIn mt-4" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+        <Form onSubmit={handleSubmit} className="p-4 shadow rounded-3 bounceIn mt-4" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
           <h5 className="text-center mb-4 fw-bold" style={{ color: 'var(--text-color)' }}>{question || 'Estimation Poll'}</h5>
           <Row>
             <Col xs={12} className="d-flex flex-column gap-3">
@@ -98,10 +98,12 @@ function VotingForm({ pollState, dispatch }) {
                   type="radio"
                   id={`option-${idx}`}
                   key={idx}
-                  label={<span style={{ fontSize: '1.2rem' }}>{option.option}</span>}
+                  label={<span className="fs-5">{option.option}</span>}
                   name="poll-options"
                   value={String(option.option)}
                   onChange={handleChange}
+                  className="py-2 px-3 rounded"
+                  style={{ transition: 'background-color 150ms ease' }}
                 />
               ))}
             </Col>
@@ -110,7 +112,7 @@ function VotingForm({ pollState, dispatch }) {
             <Col xs={12}>
               <Button
                 type="submit"
-                variant="dark"
+                variant="primary"
                 disabled={clicked || !selected}
                 className="w-100 py-3 fs-5 rounded d-flex align-items-center justify-content-center"
               >

@@ -22,7 +22,7 @@ function CreatePoll() {
         <Container className="mt-5">
           <Row className="justify-content-center">
             <Col xs={12} md={8} lg={6}>
-              <Card className="p-4 shadow-sm mb-5 rounded-3 bounceIn" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+              <Card className="p-4 shadow mb-5 rounded-3 bounceIn">
                 <div className="d-flex justify-content-center mb-4">
                   <BootstrapSwitchButton
                     checked={pollType === 'est'}
