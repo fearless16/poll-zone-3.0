@@ -3,15 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import Toast from 'react-bootstrap/Toast'
 import { Button } from 'react-bootstrap'
 
-/**
- * ToastComponent
- * Shows a temporary alert (with roomId) after room creation.
- * Navigates to /create after dismiss.
- *
- * @param {boolean} show - Whether to show the toast
- * @param {function} setShow - Setter for toast visibility
- * @param {string} roomId - The newly created room's ID
- */
 function ToastComponent({ show, setShow, roomId }) {
   const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
@@ -27,7 +18,6 @@ function ToastComponent({ show, setShow, roomId }) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Fallback for non-HTTPS or denied permissions
       const textArea = document.createElement('textarea')
       textArea.value = roomId
       document.body.appendChild(textArea)
@@ -46,17 +36,26 @@ function ToastComponent({ show, setShow, roomId }) {
     >
       <Toast show={show} onClose={toggleShow} animation>
         <Toast.Header>
-          <strong className="me-auto">Room ID</strong>
+          <strong className="me-auto">Room Created</strong>
         </Toast.Header>
-        <Toast.Body className="d-flex justify-content-between align-items-center">
-          <span className="font-monospace">{roomId}</span>
-          <Button
-            size="sm"
-            variant={copied ? 'success' : 'outline-dark'}
-            onClick={handleCopy}
-          >
-            {copied ? 'Copied!' : 'Copy'}
-          </Button>
+        <Toast.Body>
+          <div className="d-flex align-items-center justify-content-between gap-2">
+            <span
+              className="font-monospace text-truncate"
+              style={{ fontSize: '0.9rem', maxWidth: '14rem' }}
+              title={roomId}
+            >
+              {roomId}
+            </span>
+            <Button
+              size="sm"
+              variant={copied ? 'success' : 'outline-dark'}
+              onClick={handleCopy}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              {copied ? 'Copied!' : 'Copy ID'}
+            </Button>
+          </div>
         </Toast.Body>
       </Toast>
     </div>

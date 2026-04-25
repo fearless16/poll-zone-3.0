@@ -35,16 +35,16 @@ const Modals = ({ setModalOpen, modalOpen, setSubmitted, roomId, navigate }) => 
   return (
     <Modal show={modalOpen} onHide={handleClose} centered backdrop="static" keyboard={!loading}>
       <Modal.Header closeButton={!loading}>
-        <Modal.Title>Submit Poll?</Modal.Title>
+        <Modal.Title>Confirm Close Poll</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
         {loading ? (
           <div className="d-flex justify-content-center align-items-center py-4">
-            <Spinner animation="border" variant="info" role="status" />
+            <Spinner animation="border" variant="dark" role="status" />
           </div>
         ) : (
-          <p className="text-muted mb-0">All participants have not voted yet. Are you sure?</p>
+          <p className="text-muted mb-0">All participants have not voted yet. Are you sure you want to close this poll?</p>
         )}
       </Modal.Body>
 

@@ -19,7 +19,8 @@ import styles from './Home.module.css'
  */
 function Home() {
   const [error, setError] = useState(null)
-  const [disabled, setDisabled] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [joining, setJoining] = useState(false)
   const [show, setShow] = useState(false)
   const [roomId, setRoomId] = useState('')
 
@@ -36,7 +37,7 @@ function Home() {
    */
   const handleCreateSubmit = async (e) => {
     e.preventDefault()
-    setDisabled(true)
+    setCreating(true)
     setError(null)
 
     try {
@@ -59,7 +60,7 @@ function Home() {
     } catch (err) {
       setError('Something went wrong')
     } finally {
-      setDisabled(false)
+      setCreating(false)
     }
   }
 
@@ -69,7 +70,7 @@ function Home() {
    */
   const handleJoinSubmit = async (e) => {
     e.preventDefault()
-    setDisabled(true)
+    setJoining(true)
     setError(null)
 
     const roomId = idRef.current.value.trim()
@@ -77,7 +78,7 @@ function Home() {
 
     if (!roomId || !name) {
       setError('Display name and Room ID are required.')
-      setDisabled(false)
+      setJoining(false)
       return
     }
 
@@ -98,7 +99,7 @@ function Home() {
     } catch (err) {
       setError('Something went wrong')
     } finally {
-      setDisabled(false)
+      setJoining(false)
     }
   }
 
@@ -139,8 +140,8 @@ function Home() {
                   required
                 />
               </div>
-              <Button type="submit" variant="primary" className="w-100 py-2" disabled={disabled}>
-                {disabled ? (
+              <Button type="submit" variant="dark" className="w-100 py-2" disabled={creating}>
+                {creating ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" />
                     Creating...
@@ -180,8 +181,8 @@ function Home() {
                   required
                 />
               </div>
-              <Button type="submit" variant="dark" className="w-100 py-2" disabled={disabled}>
-                {disabled ? (
+              <Button type="submit" variant="dark" className="w-100 py-2" disabled={joining}>
+                {joining ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status" />
                     Joining...

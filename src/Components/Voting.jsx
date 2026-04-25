@@ -60,6 +60,7 @@ function Voting() {
     try {
       const roomId = localStorage.getItem('roomId')
       await addPoll(roomId, options, question)
+      dispatch({ type: REDUCER_ACTIONS.POLL_CREATED })
       navigate('/poll')
     } catch {
       dispatch({ type: REDUCER_ACTIONS.FAILURE })
@@ -72,9 +73,9 @@ function Voting() {
     <>
       {/* {(pollState.loading || clicked) && <Loader />} */}
       {!pollState.loading && (
-        <Card className="border-0 shadow-none">
+        <Card>
           {' '}
-          <Card.Body className="px-0">
+          <Card.Body>
             <Card.Title className="fw-semibold mb-3">Create Question Poll</Card.Title>
 
             {error && <Alert variant="danger">{error}</Alert>}
@@ -112,7 +113,7 @@ function Voting() {
                   </Button>
                 </Col>
                 <Col xs="auto">
-                  <Button variant="primary" type="submit" size="md" disabled={clicked}>
+                  <Button variant="dark" type="submit" size="md" disabled={clicked}>
                     {clicked ? 'Submitting...' : 'Submit'}
                   </Button>
                 </Col>

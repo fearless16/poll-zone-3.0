@@ -1,121 +1,100 @@
-# 🗳️ Poll Zone (Realtime voting system)
+# 🗳️ Poll Zone — Realtime Voting System
 
-A lightning-fast, race-condition-proof voting system built using **React**, **Firebase Firestore**, and **transactional vote casting**. Handles real-time updates, prevents double voting, and survives concurrency like a boss.
+A lightning-fast, race-condition-proof voting system built with **React**, **Firebase Firestore**, and **transactional vote casting**. Supports real-time updates, prevents double voting, and handles concurrency gracefully.
 
----
-
-## 🚀 Features
-
-- 🔥 **Realtime poll updates** via Firestore listeners
-- 🔒 **Secure vote casting** using Firestore `runTransaction()`
-- 🛡️ **Double voting prevention**
-- 🧠 **Optionally anonymous or named voting**
-- 📊 **Poll creation + result viewing**
-- 🧪 **Fully testable with Firebase Emulator**
-- 🧼 Optimized React hooks (`useReducer`, `useEffect`) with state guards
+**Live:** [https://poll-zone.web.app](https://poll-zone.web.app)
 
 ---
 
-## 🧱 Tech Stack
+## Features
 
-| Tech              | Usage                    |
-| ----------------- | ------------------------ |
-| React             | Frontend (18+)           |
-| Firebase          | Firestore DB             |
-| Firestore         | Real-time sync + storage |
-| Vite              | Fast dev + build tooling |
-| Jest              | Unit + emulator testing  |
-| Firebase Emulator | Local test infra         |
+- **Realtime poll updates** via Firestore `onSnapshot` listeners
+- **Transactional vote casting** using `runTransaction()` — no race conditions
+- **Double voting prevention** at UI, reducer, and database layers
+- **Two poll types:** Standard voting polls and estimation (story point) polls
+- **Dark / Light mode** toggle with `localStorage` persistence
+- **Room-based sessions** — host creates a room, participants join with a Room ID
+- **Responsive UI** — Bootstrap 5 with CSS custom properties
 
 ---
 
-## 📦 Folder Structure
+## Tech Stack
+
+| Tech               | Usage                         |
+| ------------------ | ----------------------------- |
+| React 18           | Frontend (JSX + hooks)        |
+| React Router v6    | Client-side routing           |
+| React Bootstrap    | UI component library          |
+| Firebase Firestore | Real-time database            |
+| Vite               | Dev server + production build |
+| Vitest             | Unit + integration tests      |
+| Firebase Hosting   | Deployment                    |
+
+---
+
+## Folder Structure
 
 ```
-.
-├── src/
-│   ├── Components/          # UI Components
-│   ├── Context/             # Room & Poll State (useRoomData, reducer)
-│   ├── Firebase/            # DB config & dbHandler (castVote, etc.)
-│   ├── Forms/               # Voting Form logic
-│   └── Utils/               # Constants etc.
-├── tests/                   # Firebase Emulator-based tests
-├── public/
-├── firebase.json            # Emulator config
-└── README.md
+src/
+├── Components/          # UI — NavBar, Home, PollPage, Result, Toast, etc.
+│   └── Forms/           # VotingForm
+├── Context/             # pollReducer + useRoomData (Firestore listener)
+├── Firebase/            # config.js + dbHandler.js (CRUD + transactions)
+└── Utils/               # Constants (messages, reducer actions)
+tests/                   # Vitest test suites (98 tests)
 ```
 
 ---
 
-## 🧠 Core Logic Overview
+## Core Logic
 
-### 🔄 `useRoomData` (React Hook)
+### `useRoomData` — Firestore Listener Hook
 
-Attaches Firestore snapshot listener:
+Subscribes to room document changes and dispatches state updates:
 
 ```js
 onSnapshot(doc(db, 'rooms', roomId), (snapshot) => {
-  if (!snapshot.metadata.hasPendingWrites) {
-    dispatch({ type: SUCCESS, payload })
-  }
+  dispatch({ type: SUCCESS, payload: snapshot.data() })
 })
 ```
 
----
+### `castVote` — Transactional Voting
 
-### 🔐 `castVote` (Transactional Voting)
+Atomically increments vote count and records the voter:
 
 ```js
 await runTransaction(db, async (transaction) => {
   const roomDoc = await transaction.get(roomRef)
-  if (voters.includes(userId)) throw Error("Already voted!")
-  options[optionIndex].votes += 1
-  transaction.update(roomRef, { 'poll.options': options, ... })
+  const voters = roomDoc.data().poll.voted
+  if (voters.some(v => v.id === userId)) throw Error('Already voted')
+  options[index].votes += 1
+  transaction.update(roomRef, { 'poll.options': options, 'poll.voted': [...voters, { id, displayName }] })
 })
 ```
 
+### `pollReducer` — State Machine
+
+Manages poll lifecycle: `SUCCESS` (server sync), `VOTED` (optimistic), `POLL_CREATED` (reset), `LOADING`, `FAILURE`.
+
 ---
 
-## 🧪 Run Emulator Tests
-
-1. Start Firestore Emulator:
+## Setup & Run Locally
 
 ```bash
-npm run emulators
+npm install     # or: bun install
+npm run dev     # Starts Vite dev server at localhost:5173
 ```
 
-2. Run tests:
+### Run Tests
 
 ```bash
-npm run test
+npx vitest run  # 98 tests across 4 suites
 ```
 
----
-
-## 🛠️ Firebase Emulator Config (firebase.json)
-
-```json
-{
-  "emulators": {
-    "firestore": { "port": 8080 }
-  }
-}
-```
-
----
-
-## 🏗️ Setup & Run Locally
+### Deploy
 
 ```bash
-npm install
-npm run dev
+npx vite build && npx firebase deploy --only hosting --project poll-zone
 ```
-
----
-
-## 🧯 Warning
-
-- Firestore rules not enforced in local emulator (bypass security)
-- All voting logic is transactional but still needs `auth` protection for prod
 
 ---
