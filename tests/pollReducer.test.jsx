@@ -8,12 +8,12 @@ const basePoll = {
   voted: [{ id: 'user-321' }],
   options: [],
   question: 'Kya haal hai?',
-  lastUpdated: { seconds: 9999 },
+  createdAt: { seconds: 5000 },
 }
 
 const baseState = {
   loading: false,
-  currentPollData: { lastUpdated: { seconds: 9998 } },
+  currentPollData: {},
   roomData: {},
   error: '',
   isHost: false,
@@ -27,16 +27,10 @@ describe('pollReducer', () => {
 
   beforeEach(() => {
     payload = {
-      poll: { ...basePoll, lastUpdated: { seconds: 9999 } },
+      poll: { ...basePoll },
       host: mockUserId,
       userId: mockUserId,
     }
-  })
-
-  it('should return same state if payload is older than current state', () => {
-    const olderPayload = { ...payload, poll: { ...basePoll, lastUpdated: { seconds: 9000 } } }
-    const result = pollReducer(baseState, { type: REDUCER_ACTIONS.SUCCESS, payload: olderPayload })
-    expect(result).toEqual(baseState)
   })
 
   it('should handle SUCCESS with fresh poll data', () => {
@@ -102,7 +96,6 @@ describe('pollReducer', () => {
         ...basePoll,
         voted: [{ id: 'user-321' }, { id: 'user-other' }],
         createdAt: { seconds: 5000 },
-        lastUpdated: { seconds: 10000 },
       },
       host: 'host-1',
       userId: mockUserId,
@@ -128,7 +121,6 @@ describe('pollReducer', () => {
         ...basePoll,
         voted: [],
         createdAt: { seconds: 9000 },
-        lastUpdated: { seconds: 11000 },
       },
       host: 'host-1',
       userId: mockUserId,
@@ -139,5 +131,19 @@ describe('pollReducer', () => {
     })
     // voted resets to false for the new poll
     expect(result.voted).toBe(false)
+  })
+
+  it('should handle POLL_CREATED action (reset voted for new poll)', () => {
+    const stateAfterVote = {
+      ...baseState,
+      voted: true,
+      isOpen: false,
+      isPoll: true,
+    }
+    const result = pollReducer(stateAfterVote, { type: REDUCER_ACTIONS.POLL_CREATED })
+    expect(result.voted).toBe(false)
+    expect(result.isOpen).toBe(true)
+    expect(result.isPoll).toBe(true)
+    expect(result.loading).toBe(false)
   })
 })

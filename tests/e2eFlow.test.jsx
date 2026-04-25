@@ -682,6 +682,9 @@ describe('E2E Flow Tests', () => {
       expect(screen.getByTestId('chart')).toBeInTheDocument()
       expect(screen.getByText('React')).toBeInTheDocument()
       expect(screen.getByText('Vue')).toBeInTheDocument()
+      // Room name must be visible (uses roomName field, not name)
+      expect(screen.getByText('Sprint')).toBeInTheDocument()
+      expect(screen.getByText('Room Details')).toBeInTheDocument()
       // Vote counts appear in both sidebar badge and vote list — use getAllByText
       expect(screen.getAllByText('3').length).toBeGreaterThanOrEqual(1)
       expect(screen.getAllByText('2').length).toBeGreaterThanOrEqual(1)
@@ -1237,7 +1240,7 @@ describe('E2E Flow Tests', () => {
 
       const ctx = {
         pollState: {
-          roomData: { name: 'Sprint', roomId: 'ROOM-1', participants: [{ id: 'host-1', name: 'A' }], poll: { options: [{ option: '1', votes: 1 }] } },
+          roomData: { roomName: 'Sprint', roomId: 'ROOM-1', participants: [{ id: 'host-1', name: 'A' }], poll: { options: [{ option: '1', votes: 1 }] } },
           currentPollData: {
             isOpen: true,
             options: [{ option: '1', votes: 1 }, { option: '2', votes: 0 }],
@@ -1287,7 +1290,7 @@ describe('E2E Flow Tests', () => {
 
       const ctx = {
         pollState: {
-          roomData: { name: 'Sprint', roomId: 'ROOM-1', participants: [{ id: 'host-1', name: 'A' }], poll: { options: [{ option: '1', votes: 1 }] } },
+          roomData: { roomName: 'Sprint', roomId: 'ROOM-1', participants: [{ id: 'host-1', name: 'A' }], poll: { options: [{ option: '1', votes: 1 }] } },
           currentPollData: {
             isOpen: false,
             options: [{ option: '1', votes: 1 }],
@@ -1403,6 +1406,383 @@ describe('E2E Flow Tests', () => {
       // Verify home page renders card titles (animation applied via CSS modules)
       const titles = screen.getAllByText('Create Room')
       expect(titles.length).toBeGreaterThanOrEqual(1)
+    })
+  })
+
+  // ───────────────────────────────────────────────────────────────
+  //  STRICT DATA FLOW TESTS
+  //  These verify that the Firestore document schema (roomName,
+  //  poll.isOpen, poll.voted, poll.createdAt) is correctly handled
+  //  by the reducer, components, and full flow.
+  // ───────────────────────────────────────────────────────────────
+  describe('Strict Data Flow: Firestore Schema Fidelity', () => {
+
+    // Helper: creates a context matching exact Firestore document shape
+    // after createRoom + addPoll + votes
+    const firestoreContext = ({
+      roomName = 'Sprint Planning',
+      roomId = 'ROOM-1',
+      hostId = 'host-1',
+      userId = 'host-1',
+      participants = [{ id: 'host-1', name: 'Alice' }],
+      poll = {},
+      stateOverrides = {},
+    } = {}) => {
+      // Simulate what the reducer produces from a Firestore doc
+      const firestoreDoc = { roomName, host: hostId, participants, poll, createdAt: { seconds: 1000 } }
+      const payload = { ...firestoreDoc, userId, roomId }
+      const isHostVal = hostId === userId
+      const isOpenVal = !!poll?.isOpen
+      const isPollVal = !!poll && Object.keys(poll).length > 0
+      const votedVal = Array.isArray(poll?.voted) && poll.voted.some(v => v.id === userId)
+
+      return {
+        pollState: {
+          loading: false,
+          currentPollData: poll,
+          roomData: payload,
+          error: '',
+          isHost: isHostVal,
+          isOpen: isOpenVal,
+          voted: votedVal,
+          isPoll: isPollVal,
+          ...stateOverrides,
+        },
+        dispatch: vi.fn(),
+        roomId,
+        setRoomId: vi.fn(),
+        userId,
+        setUserId: vi.fn(),
+      }
+    }
+
+    it('RoomDetailsCard renders roomName (not name) from Firestore doc', () => {
+      const ctx = firestoreContext({ roomName: 'Sprint Planning' })
+      // RoomDetailsCard is rendered inside Result
+      ctx.pollState.isPoll = true
+      ctx.pollState.isOpen = true
+      ctx.pollState.currentPollData = {
+        isOpen: true,
+        options: [{ option: '1', votes: 1 }],
+        voted: [{ id: 'host-1', name: 'Alice' }],
+      }
+
+      renderWithContext(
+        <Routes>
+          <Route path="/" element={<Result />} />
+        </Routes>,
+        ctx
+      )
+
+      // Room name MUST render from roomName field
+      expect(screen.getByText('Sprint Planning')).toBeInTheDocument()
+      expect(screen.getByText('Room Details')).toBeInTheDocument()
+    })
+
+    it('participant sees VotingForm when poll is open and not voted', () => {
+      const poll = {
+        isOpen: true,
+        question: 'Best framework?',
+        options: [{ option: 'React', votes: 0 }, { option: 'Vue', votes: 0 }],
+        voted: [],
+        createdAt: { seconds: 2000 },
+      }
+      const ctx = firestoreContext({
+        userId: 'participant-1',
+        participants: [{ id: 'host-1', name: 'Alice' }, { id: 'participant-1', name: 'Bob' }],
+        poll,
+      })
+
+      renderWithContext(
+        <Routes>
+          <Route path="/" element={<PollPage />} />
+        </Routes>,
+        ctx
+      )
+
+      expect(screen.getByText('Best framework?')).toBeInTheDocument()
+      expect(screen.getByText('React')).toBeInTheDocument()
+      expect(screen.getByText('Vue')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument()
+    })
+
+    it('participant sees "Poll closed" when poll.isOpen = false', () => {
+      const poll = {
+        isOpen: false,
+        options: [{ option: 'React', votes: 2 }],
+        voted: [{ id: 'host-1', name: 'Alice' }, { id: 'participant-1', name: 'Bob' }],
+        createdAt: { seconds: 2000 },
+      }
+      const ctx = firestoreContext({
+        userId: 'participant-1',
+        participants: [{ id: 'host-1', name: 'Alice' }, { id: 'participant-1', name: 'Bob' }],
+        poll,
+      })
+
+      renderWithContext(
+        <Routes>
+          <Route path="/" element={<PollPage />} />
+        </Routes>,
+        ctx
+      )
+
+      expect(screen.getByText('Poll closed')).toBeInTheDocument()
+      expect(screen.getByText('see results')).toBeInTheDocument()
+    })
+
+    it('participant sees new poll after host creates one (voted resets)', () => {
+      // New poll with empty voted array — participant has NOT voted
+      const newPoll = {
+        isOpen: true,
+        question: 'New question?',
+        options: [{ option: 'A', votes: 0 }, { option: 'B', votes: 0 }],
+        voted: [],
+        createdAt: { seconds: 9000 },
+      }
+      const ctx = firestoreContext({
+        userId: 'participant-1',
+        participants: [{ id: 'host-1', name: 'Alice' }, { id: 'participant-1', name: 'Bob' }],
+        poll: newPoll,
+      })
+
+      renderWithContext(
+        <Routes>
+          <Route path="/" element={<PollPage />} />
+        </Routes>,
+        ctx
+      )
+
+      // Must see the NEW poll's question and options
+      expect(screen.getByText('New question?')).toBeInTheDocument()
+      expect(screen.getByText('A')).toBeInTheDocument()
+      expect(screen.getByText('B')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument()
+    })
+
+    it('host sees "No poll present" when room has empty poll object', () => {
+      const ctx = firestoreContext({ poll: {} })
+
+      renderWithContext(
+        <Routes>
+          <Route path="/" element={<PollPage />} />
+        </Routes>,
+        ctx
+      )
+
+      expect(screen.getByText('No poll present')).toBeInTheDocument()
+    })
+
+    it('non-host sees "No active poll" when room has empty poll object', () => {
+      const ctx = firestoreContext({ userId: 'participant-1', poll: {} })
+
+      renderWithContext(
+        <Routes>
+          <Route path="/" element={<PollPage />} />
+        </Routes>,
+        ctx
+      )
+
+      expect(screen.getByText('No active poll, wait for host to create a poll')).toBeInTheDocument()
+    })
+
+    it('participant sees "Voted successfully" after voting', () => {
+      const poll = {
+        isOpen: true,
+        options: [{ option: 'React', votes: 1 }],
+        voted: [{ id: 'participant-1', name: 'Bob' }],
+        createdAt: { seconds: 2000 },
+      }
+      const ctx = firestoreContext({
+        userId: 'participant-1',
+        participants: [{ id: 'host-1', name: 'Alice' }, { id: 'participant-1', name: 'Bob' }],
+        poll,
+      })
+
+      renderWithContext(
+        <Routes>
+          <Route path="/" element={<PollPage />} />
+        </Routes>,
+        ctx
+      )
+
+      expect(screen.getByText('Voted successfully')).toBeInTheDocument()
+      expect(screen.getByText('see results')).toBeInTheDocument()
+    })
+  })
+
+  // ───────────────────────────────────────────────────────────────
+  //  STRICT REDUCER STATE TRANSITION TESTS
+  //  Verify exact state transitions that mirror the real Firestore flow.
+  // ───────────────────────────────────────────────────────────────
+  describe('Strict Reducer: State Transitions Mirror Firestore', () => {
+    const initialState = {
+      loading: true,
+      currentPollData: {},
+      roomData: {},
+      error: '',
+      isHost: false,
+      isOpen: false,
+      voted: false,
+      isPoll: false,
+    }
+
+    it('full host flow: join → create poll → vote → close → create new poll', () => {
+      // Step 1: Room created, no poll yet
+      const roomPayload = {
+        roomName: 'Sprint',
+        host: 'host-1',
+        participants: [{ id: 'host-1', name: 'Alice' }],
+        poll: {},
+        userId: 'host-1',
+        roomId: 'ROOM-1',
+      }
+      let state = pollReducer(initialState, { type: REDUCER_ACTIONS.SUCCESS, payload: roomPayload })
+      expect(state.isHost).toBe(true)
+      expect(state.isPoll).toBe(false)
+      expect(state.isOpen).toBe(false)
+      expect(state.loading).toBe(false)
+
+      // Step 2: Host creates poll
+      const pollPayload = {
+        ...roomPayload,
+        poll: {
+          isOpen: true,
+          options: [{ option: '1', votes: 0 }, { option: '2', votes: 0 }],
+          voted: [],
+          createdAt: { seconds: 5000 },
+        },
+      }
+      state = pollReducer(state, { type: REDUCER_ACTIONS.SUCCESS, payload: pollPayload })
+      expect(state.isPoll).toBe(true)
+      expect(state.isOpen).toBe(true)
+      expect(state.voted).toBe(false)
+
+      // Step 3: Host votes (optimistic)
+      state = pollReducer(state, { type: REDUCER_ACTIONS.VOTED })
+      expect(state.voted).toBe(true)
+
+      // Step 4: Snapshot confirms vote
+      const votedPayload = {
+        ...pollPayload,
+        poll: {
+          ...pollPayload.poll,
+          voted: [{ id: 'host-1', name: 'Alice' }],
+          options: [{ option: '1', votes: 1 }, { option: '2', votes: 0 }],
+        },
+      }
+      state = pollReducer(state, { type: REDUCER_ACTIONS.SUCCESS, payload: votedPayload })
+      expect(state.voted).toBe(true)
+
+      // Step 5: Host closes poll
+      const closedPayload = {
+        ...votedPayload,
+        poll: { ...votedPayload.poll, isOpen: false },
+      }
+      state = pollReducer(state, { type: REDUCER_ACTIONS.SUCCESS, payload: closedPayload })
+      expect(state.isOpen).toBe(false)
+      expect(state.isPoll).toBe(true)
+      expect(state.voted).toBe(true) // still voted on OLD poll
+
+      // Step 6: Host dispatches POLL_CREATED (from Estimation/Voting component)
+      state = pollReducer(state, { type: REDUCER_ACTIONS.POLL_CREATED })
+      expect(state.voted).toBe(false)
+      expect(state.isOpen).toBe(true)
+      expect(state.isPoll).toBe(true)
+
+      // Step 7: Snapshot arrives with new poll
+      const newPollPayload = {
+        ...roomPayload,
+        poll: {
+          isOpen: true,
+          options: [{ option: '3', votes: 0 }, { option: '5', votes: 0 }],
+          voted: [],
+          createdAt: { seconds: 9000 },
+        },
+      }
+      state = pollReducer(state, { type: REDUCER_ACTIONS.SUCCESS, payload: newPollPayload })
+      expect(state.isOpen).toBe(true)
+      expect(state.isPoll).toBe(true)
+      expect(state.voted).toBe(false) // reset for new poll
+    })
+
+    it('full participant flow: join → see poll → vote → poll closed → new poll', () => {
+      const participantId = 'participant-1'
+
+      // Step 1: Room with active poll
+      const pollPayload = {
+        roomName: 'Sprint',
+        host: 'host-1',
+        participants: [{ id: 'host-1', name: 'Alice' }, { id: participantId, name: 'Bob' }],
+        poll: {
+          isOpen: true,
+          options: [{ option: 'React', votes: 0 }, { option: 'Vue', votes: 0 }],
+          voted: [],
+          createdAt: { seconds: 5000 },
+        },
+        userId: participantId,
+        roomId: 'ROOM-1',
+      }
+      let state = pollReducer(initialState, { type: REDUCER_ACTIONS.SUCCESS, payload: pollPayload })
+      expect(state.isHost).toBe(false)
+      expect(state.isPoll).toBe(true)
+      expect(state.isOpen).toBe(true)
+      expect(state.voted).toBe(false)
+
+      // Step 2: Participant votes (optimistic)
+      state = pollReducer(state, { type: REDUCER_ACTIONS.VOTED })
+      expect(state.voted).toBe(true)
+
+      // Step 3: Snapshot confirms vote
+      const votedPayload = {
+        ...pollPayload,
+        poll: {
+          ...pollPayload.poll,
+          voted: [{ id: participantId, name: 'Bob' }],
+          options: [{ option: 'React', votes: 1 }, { option: 'Vue', votes: 0 }],
+        },
+      }
+      state = pollReducer(state, { type: REDUCER_ACTIONS.SUCCESS, payload: votedPayload })
+      expect(state.voted).toBe(true)
+
+      // Step 4: Host closes poll — participant gets snapshot
+      const closedPayload = {
+        ...votedPayload,
+        poll: { ...votedPayload.poll, isOpen: false },
+      }
+      state = pollReducer(state, { type: REDUCER_ACTIONS.SUCCESS, payload: closedPayload })
+      expect(state.isOpen).toBe(false)
+      expect(state.isPoll).toBe(true)
+      // PollPage should show "Poll closed" (not voted/open)
+
+      // Step 5: Host creates new poll — participant gets snapshot
+      const newPollPayload = {
+        ...pollPayload,
+        poll: {
+          isOpen: true,
+          options: [{ option: 'A', votes: 0 }, { option: 'B', votes: 0 }],
+          voted: [],
+          createdAt: { seconds: 9000 }, // different createdAt
+        },
+      }
+      state = pollReducer(state, { type: REDUCER_ACTIONS.SUCCESS, payload: newPollPayload })
+      expect(state.isOpen).toBe(true)
+      expect(state.isPoll).toBe(true)
+      expect(state.voted).toBe(false) // MUST reset — new poll, participant hasn't voted
+    })
+
+    it('roomName field is preserved in roomData through reducer', () => {
+      const payload = {
+        roomName: 'Retro Meeting',
+        host: 'host-1',
+        participants: [{ id: 'host-1', name: 'Alice' }],
+        poll: { isOpen: true, options: [], voted: [], createdAt: { seconds: 1000 } },
+        userId: 'host-1',
+        roomId: 'ROOM-1',
+      }
+      const state = pollReducer(initialState, { type: REDUCER_ACTIONS.SUCCESS, payload })
+      expect(state.roomData.roomName).toBe('Retro Meeting')
+      // Ensure there's no 'name' field that could be confused
+      expect(state.roomData.name).toBeUndefined()
     })
   })
 })
