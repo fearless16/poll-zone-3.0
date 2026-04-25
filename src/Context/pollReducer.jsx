@@ -28,6 +28,8 @@ export const pollReducer = (state, action) => {
         voted: isVoted(action.payload?.poll || {}, action.payload.userId),
         isPoll: isPoll(action.payload.poll),
       }
+    case REDUCER_ACTIONS.VOTED:
+      return { ...state, loading: false, voted: true }
     case REDUCER_ACTIONS.OPEN:
       return { ...state, isOpen: true }
     case REDUCER_ACTIONS.LOADING:

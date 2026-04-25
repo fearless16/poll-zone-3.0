@@ -521,7 +521,13 @@ describe('E2E Flow Tests', () => {
         expect(mockCastVote).toHaveBeenCalledWith('room-1', 0, 'user-1', 'Alice')
       })
 
-      // Simulate Firestore snapshot update after vote
+      // Optimistic update: VOTED message appears immediately after castVote resolves,
+      // without needing the Firestore snapshot to arrive
+      await waitFor(() => {
+        expect(screen.getByText(Messages.VOTED.message)).toBeInTheDocument()
+      })
+
+      // Simulate Firestore snapshot arriving later — state should stay voted
       act(() => {
         snapshotCallback({
           exists: () => true,
@@ -543,10 +549,8 @@ describe('E2E Flow Tests', () => {
         })
       })
 
-      // Should now show "Voted" message
-      await waitFor(() => {
-        expect(screen.getByText(Messages.VOTED.message)).toBeInTheDocument()
-      })
+      // Still shows voted after snapshot confirms
+      expect(screen.getByText(Messages.VOTED.message)).toBeInTheDocument()
     })
   })
 

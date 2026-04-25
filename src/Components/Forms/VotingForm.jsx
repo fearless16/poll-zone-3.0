@@ -46,11 +46,11 @@ function VotingForm({ pollState, dispatch }) {
       }
 
       await castVote(roomId, index, id, displayName)
+      dispatch({ type: REDUCER_ACTIONS.VOTED })
     } catch (err) {
       dispatch({ type: REDUCER_ACTIONS.FAILURE })
     } finally {
       setClicked(false)
-      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
     }
   }
 

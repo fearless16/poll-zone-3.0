@@ -74,6 +74,15 @@ describe('pollReducer', () => {
     expect(result.loading).toBe(false)
   })
 
+  it('should handle VOTED action (optimistic update)', () => {
+    const result = pollReducer(
+      { ...baseState, loading: true, voted: false },
+      { type: REDUCER_ACTIONS.VOTED }
+    )
+    expect(result.loading).toBe(false)
+    expect(result.voted).toBe(true)
+  })
+
   it('should handle FAILURE action', () => {
     const result = pollReducer(baseState, { type: REDUCER_ACTIONS.FAILURE })
     expect(result.loading).toBe(false)
