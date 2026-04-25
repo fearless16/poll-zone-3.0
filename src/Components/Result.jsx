@@ -31,16 +31,16 @@ function Result() {
       }
     }
     return () => dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
-  }, [])
+  }, [roomId, userId, navigate, setRoomId, setUserId, dispatch])
 
   useEffect(() => {
     if ((!roomId || !userId) && !pollState.loading) navigate('/')
-  }, [roomId, userId, pollState.loading])
+  }, [roomId, userId, pollState.loading, navigate])
 
   const handleClick = async () => {
     setSubmitted(true)
-    const totalVotes = pollState.currentPollData.voted.length
-    const totalUsers = pollState.roomData.participants.length
+    const totalVotes = pollState.currentPollData?.voted?.length ?? 0
+    const totalUsers = pollState.roomData?.participants?.length ?? 0
     if (totalVotes < totalUsers) {
       setSubmitted(false)
       setModalOpen(true)

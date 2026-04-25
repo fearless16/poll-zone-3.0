@@ -29,9 +29,11 @@ function CreatePoll() {
     return () => {
       dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
     }
-  }, [])
+  }, [roomId, userId, navigate, setRoomId, setUserId, dispatch])
 
-  if ((!roomId || !userId) && !pollState.loading) navigate('/')
+  useEffect(() => {
+    if ((!roomId || !userId) && !pollState.loading) navigate('/')
+  }, [roomId, userId, pollState.loading, navigate])
 
   return (
     <div className="page">

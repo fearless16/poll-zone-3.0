@@ -54,11 +54,11 @@ export const joinPoll = async (roomId, name) => {
 
   try {
     const snap = await getDoc(docRef)
-    if (!snap.exists()) return { error: 'Room does not exist' }
+    if (!snap.exists()) return { error: new Error('Room does not exist') }
 
     const data = snap.data()
     if (!data.participants || !Array.isArray(data.participants)) {
-      return { error: 'Invalid room data' }
+      return { error: new Error('Invalid room data') }
     }
     
     if (id && data.participants.some((p) => p.id === id)) {
@@ -91,11 +91,11 @@ export const addPoll = async (roomId, options, question = '') => {
   
   try {
     const snap = await getDoc(docRef)
-    if (!snap.exists()) return { error: 'Room not found' }
+    if (!snap.exists()) return { error: new Error('Room not found') }
     
     const roomData = snap.data()
     if (roomData.host !== userId) {
-      return { error: 'Only host can create polls' }
+      return { error: new Error('Only host can create polls') }
     }
     
     const poll = {

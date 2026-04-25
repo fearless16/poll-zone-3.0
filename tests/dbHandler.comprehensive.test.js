@@ -149,7 +149,8 @@ describe('dbHandler – comprehensive test suite', () => {
     it('returns error when room does not exist', async () => {
       getDoc.mockResolvedValueOnce(mockDocSnap(null, false))
       const result = await joinPoll('missing-room', 'User')
-      expect(result.error).toBe('Room does not exist')
+      expect(result.error).toBeInstanceOf(Error)
+      expect(result.error.message).toBe('Room does not exist')
     })
 
     it('handles Firestore error during join', async () => {

@@ -29,16 +29,22 @@ function Estimation() {
       setClicked(false)
       return
     }
-    
-    const fib = getFibValues(numberOfOptions)
 
-    const options = fib.slice(0, numberOfOptions).map((value) => ({
+    const clamped = Math.max(2, Math.min(numberOfOptions, 8))
+    const fib = getFibValues(clamped)
+
+    const options = fib.slice(0, clamped).map((value) => ({
       option: value,
       votes: 0,
     }))
 
     try {
-      await addPoll(roomId, options)
+      const { error: pollError } = await addPoll(roomId, options)
+      if (pollError) {
+        dispatch({ type: REDUCER_ACTIONS.FAILURE })
+        setClicked(false)
+        return
+      }
       navigate('/poll')
     } catch (err) {
       dispatch({ type: REDUCER_ACTIONS.FAILURE })

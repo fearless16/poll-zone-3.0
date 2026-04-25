@@ -27,7 +27,7 @@ const PollPage = () => {
 
   useEffect(() => {
     if ((!roomId || !userId) && !pollState.loading) navigate('/')
-  }, [roomId, userId, pollState.loading])
+  }, [roomId, userId, pollState.loading, navigate])
 
   const renderPollState = () => {
     const { isHost, isPoll, isOpen, voted } = pollState

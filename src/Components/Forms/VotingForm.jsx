@@ -13,7 +13,6 @@ import Loader from '../Loader'
  */
 function VotingForm({ pollState, dispatch }) {
   const [question, setQuestion] = useState('')
-  const [, setType] = useState('')
   const [selected, setSelected] = useState('')
   const [clicked, setClicked] = useState(false)
   const [options, setOptions] = useState([])
@@ -81,7 +80,6 @@ function VotingForm({ pollState, dispatch }) {
 
     const data = pollState.currentPollData
     setQuestion(data.question || '')
-    setType(data.question ? 'voting' : 'estimation')
     setOptions(data.options || [])
   }, [pollState.currentPollData])
 

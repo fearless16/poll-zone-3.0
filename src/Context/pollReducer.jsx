@@ -1,7 +1,7 @@
 import { Messages, REDUCER_ACTIONS } from '../Utils/constants'
 
 const isVoted = ({ voted }, userId) => {
-  if (!voted || !userId) {
+  if (!Array.isArray(voted) || !userId) {
     return false
   }
   return voted.some((voter) => voter.id === userId)

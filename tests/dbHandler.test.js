@@ -106,7 +106,7 @@ describe('🔥 dbHandler 100% test suite', () => {
     it('should handle room not found', async () => {
       getDoc.mockResolvedValueOnce(mockDocSnap(null, false))
       const result = await joinPoll('roomId', 'Bob')
-      expect(result).toEqual({ error: 'Room does not exist' })
+      expect(result).toEqual({ error: new Error('Room does not exist') })
     })
 
     it('should handle join error', async () => {

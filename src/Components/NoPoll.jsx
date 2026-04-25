@@ -1,5 +1,6 @@
 import React from 'react'
 import { Card } from 'react-bootstrap'
+import { Link } from 'react-router-dom'
 
 const NoPoll = ({ message }) => {
   const classes = [
@@ -22,9 +23,11 @@ const NoPoll = ({ message }) => {
       >
         <Card.Title className="text-center">
           {message.message}
-          <Card.Link href={message.path} className="mx-2">
-            {message.linkMessage}
-          </Card.Link>
+          {message.path && (
+            <Link to={message.path} className="mx-2">
+              {message.linkMessage}
+            </Link>
+          )}
         </Card.Title>
       </Card>
     </div>
