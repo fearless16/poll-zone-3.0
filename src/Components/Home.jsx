@@ -8,7 +8,7 @@
 import { useState, useRef } from 'react'
 import { createRoom, joinPoll } from '../Firebase/dbHandler'
 import { Alert, Button } from 'react-bootstrap'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import Toast from './Toast'
 import styles from './Home.module.css'
 

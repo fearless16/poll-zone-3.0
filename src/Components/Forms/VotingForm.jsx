@@ -14,7 +14,6 @@ import { REDUCER_ACTIONS } from '../../Utils/constants'
  */
 function VotingForm({ pollState, dispatch }) {
   const [question, setQuestion] = useState('')
-  const [, setType] = useState('')
   const [selected, setSelected] = useState('')
   const [clicked, setClicked] = useState(false)
   const [options, setOptions] = useState([])
@@ -29,29 +28,28 @@ function VotingForm({ pollState, dispatch }) {
     setClicked(true)
     dispatch({ type: REDUCER_ACTIONS.LOADING })
 
-    try {
-      const id = localStorage.getItem('id')
-      const displayName = localStorage.getItem('displayName')
-      const roomId = localStorage.getItem('roomId')
-      const index = options.findIndex((opt) => opt.option.toString() === selected)
+    const id = localStorage.getItem('id')
+    const displayName = localStorage.getItem('displayName')
+    const roomId = localStorage.getItem('roomId')
+    const index = options.findIndex((opt) => opt.option.toString() === selected)
 
-      if (
-        index === -1 ||
-        !pollState?.currentPollData ||
-        pollState.currentPollData.voted.some((v) => v.id === id)
-      ) {
-        setClicked(false)
-        dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
-        return
-      }
-
-      await castVote(roomId, index, id, displayName)
-      dispatch({ type: REDUCER_ACTIONS.VOTED })
-    } catch (err) {
-      dispatch({ type: REDUCER_ACTIONS.FAILURE })
-    } finally {
+    if (
+      index === -1 ||
+      !pollState?.currentPollData ||
+      pollState.currentPollData.voted.some((v) => v.id === id)
+    ) {
       setClicked(false)
+      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
+      return
     }
+
+    const { error } = await castVote(roomId, index, id, displayName)
+    if (error) {
+      dispatch({ type: REDUCER_ACTIONS.FAILURE })
+    } else {
+      dispatch({ type: REDUCER_ACTIONS.VOTED })
+    }
+    setClicked(false)
   }
 
   /**
@@ -74,7 +72,6 @@ function VotingForm({ pollState, dispatch }) {
 
     const data = pollState.currentPollData
     setQuestion(data.question || '')
-    setType(data.question ? 'voting' : 'estimation')
     setOptions(data.options || [])
   }, [pollState.currentPollData])
 

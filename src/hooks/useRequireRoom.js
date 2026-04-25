@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { useRoomData } from '../Context/useRoomData'
 import { REDUCER_ACTIONS } from '../Utils/constants'
 

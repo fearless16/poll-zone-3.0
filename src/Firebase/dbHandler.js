@@ -100,23 +100,29 @@ export const addPoll = async (roomId, options, question = '') => {
  * @returns {Promise<void>} Resolves when the poll is successfully closed.
  */
 export const closePoll = async (roomId) => {
-  if (!roomId) throw new Error('Room ID is required')
-  if (!db) throw new Error('Firestore instance (db) is required')
+  if (!roomId) return { error: new Error('Room ID is required') }
+  if (!db) return { error: new Error('Firestore instance (db) is required') }
 
   const ref = doc(db, 'rooms', roomId)
-  const snap = await getDoc(ref)
 
-  if (!snap.exists()) {
-    throw new Error('Room does not exist')
+  try {
+    const snap = await getDoc(ref)
+
+    if (!snap.exists()) {
+      return { error: new Error('Room does not exist') }
+    }
+    const room = snap.data()
+
+    if (!room.poll || typeof room.poll !== 'object') {
+      return { error: new Error('Poll is missing or malformed') }
+    }
+    if (!room.poll.isOpen) return { response: { success: true, data: 'Poll already closed' } }
+
+    await updateDoc(ref, { 'poll.isOpen': false })
+    return { response: { success: true } }
+  } catch (error) {
+    return { error }
   }
-  const room = snap.data()
-
-  if (!room.poll || typeof room.poll !== 'object') {
-    throw new Error('Poll is missing or malformed')
-  }
-  if (!room.poll.isOpen) return
-
-  await updateDoc(ref, { 'poll.isOpen': false })
 }
 
 /**
@@ -130,26 +136,31 @@ export const closePoll = async (roomId) => {
 export const castVote = async (roomId, optionIndex, userId, userName) => {
   const roomRef = doc(db, 'rooms', roomId)
 
-  await runTransaction(db, async (transaction) => {
-    const roomSnap = await transaction.get(roomRef)
-    if (!roomSnap.exists()) throw new Error('Room does not exist')
+  try {
+    await runTransaction(db, async (transaction) => {
+      const roomSnap = await transaction.get(roomRef)
+      if (!roomSnap.exists()) throw new Error('Room does not exist')
 
-    const data = roomSnap.data()
-    const poll = data.poll
-    if (!poll?.isOpen) throw new Error('Poll is closed')
+      const data = roomSnap.data()
+      const poll = data.poll
+      if (!poll?.isOpen) throw new Error('Poll is closed')
 
-    const alreadyVoted = poll.voted.some((v) => v.id === userId)
-    if (alreadyVoted) throw new Error('Already voted')
+      const alreadyVoted = poll.voted.some((v) => v.id === userId)
+      if (alreadyVoted) throw new Error('Already voted')
 
-    const updatedOptions = [...poll.options]
-    updatedOptions[optionIndex].votes += 1
+      const updatedOptions = [...poll.options]
+      updatedOptions[optionIndex].votes += 1
 
-    const updatedVoted = [...poll.voted, { id: userId, name: userName }]
+      const updatedVoted = [...poll.voted, { id: userId, name: userName }]
 
-    transaction.update(roomRef, {
-      'poll.options': updatedOptions,
-      'poll.voted': updatedVoted,
-      'poll.lastUpdated': Timestamp.now(),
+      transaction.update(roomRef, {
+        'poll.options': updatedOptions,
+        'poll.voted': updatedVoted,
+        'poll.lastUpdated': Timestamp.now(),
+      })
     })
-  })
+    return { response: { success: true } }
+  } catch (error) {
+    return { error }
+  }
 }

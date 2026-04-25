@@ -23,12 +23,13 @@ A lightning-fast, race-condition-proof voting system built with **React**, **Fir
 | Tech               | Usage                         |
 | ------------------ | ----------------------------- |
 | React 18           | Frontend (JSX + hooks)        |
-| React Router v6    | Client-side routing           |
-| React Bootstrap    | UI component library          |
+| React Router v7    | Client-side routing           |
+| React Bootstrap 2  | UI component library          |
 | Firebase Firestore | Real-time database            |
-| Vite               | Dev server + production build |
-| Vitest             | Unit + integration tests      |
+| Vite 6             | Dev server + production build |
+| Vitest 3           | Unit + integration tests      |
 | Firebase Hosting   | Deployment                    |
+| Iconify            | Icon library                  |
 
 ---
 
@@ -41,7 +42,17 @@ src/
 ├── Context/             # pollReducer + useRoomData (Firestore listener)
 ├── Firebase/            # config.js + dbHandler.js (CRUD + transactions)
 └── Utils/               # Constants (messages, reducer actions)
-tests/                   # Vitest test suites (98 tests)
+tests/
+├── helpers/             # Shared test utilities (render helpers)
+├── homeFlow.test.jsx    # Create room, join room, toast flows
+├── pollPage.test.jsx    # PollPage states + voting flow
+├── createPoll.test.jsx  # CreatePoll, estimation, voting poll creation
+├── resultPage.test.jsx  # Result page + close poll flow
+├── ui.test.jsx          # NoPoll, NavBar, Footer, SideBar, 404 visuals
+├── integration.test.jsx # Full lifecycle, data flow, reducer transitions
+├── pollReducer.test.jsx # Pure reducer unit tests
+├── useRoomData.test.jsx # Context provider + onSnapshot tests
+└── dbHandler.test.js    # Firebase CRUD unit tests (mocked)
 ```
 
 ---
@@ -76,19 +87,36 @@ await runTransaction(db, async (transaction) => {
 
 Manages poll lifecycle: `SUCCESS` (server sync), `VOTED` (optimistic), `POLL_CREATED` (reset), `LOADING`, `FAILURE`.
 
+### Error Handling — Consistent `{response}` / `{error}` Pattern
+
+All `dbHandler` functions return `{ response }` on success or `{ error }` on failure — no exceptions to catch. Callers check the result:
+
+```js
+const { error } = await closePoll(roomId)
+if (error) { /* handle */ } else { /* proceed */ }
+```
+
 ---
 
 ## Setup & Run Locally
 
 ```bash
-npm install     # or: bun install
+npm install
 npm run dev     # Starts Vite dev server at localhost:5173
 ```
 
 ### Run Tests
 
 ```bash
-npx vitest run  # 98 tests across 4 suites
+npm test            # Run all tests with coverage
+npm run test:watch  # Watch mode
+```
+
+### Lint & Format
+
+```bash
+npm run lint        # ESLint (includes react-hooks rules)
+npm run format      # Prettier
 ```
 
 ### Deploy

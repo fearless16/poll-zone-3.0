@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { addPoll } from '../Firebase/dbHandler'
 import { useRoomData } from '../Context/useRoomData'
 import { Card, Button, Alert, Form, Row, Col } from 'react-bootstrap'
-import { useNavigate } from 'react-router-dom'
-import Loader from './Loader'
+import { useNavigate } from 'react-router'
 import { REDUCER_ACTIONS } from '../Utils/constants'
 
 function Estimation() {
@@ -30,21 +29,19 @@ function Estimation() {
       votes: 0,
     }))
 
-    try {
-      const roomId = localStorage.getItem('roomId')
-      await addPoll(roomId, options)
-      dispatch({ type: REDUCER_ACTIONS.POLL_CREATED })
-      navigate('/poll')
-    } catch (err) {
+    const roomId = localStorage.getItem('roomId')
+    const { error } = await addPoll(roomId, options)
+    if (error) {
       dispatch({ type: REDUCER_ACTIONS.FAILURE })
       setClicked(false)
+    } else {
+      dispatch({ type: REDUCER_ACTIONS.POLL_CREATED })
+      navigate('/poll')
     }
   }
 
   return (
     <>
-      {/* {(pollState.loading || clicked) && <Loader />} */}
-
       {!pollState.loading && pollState.error && (
         <Alert variant="danger" className="mt-3">
           {pollState.error}
@@ -65,7 +62,7 @@ function Estimation() {
                     <Form.Control
                       type="number"
                       value={numberOfOptions}
-                      onChange={(e) => setNumberOfOptions(e.target.value)}
+                      onChange={(e) => setNumberOfOptions(parseInt(e.target.value, 10) || 2)}
                       min={2}
                       max={8}
                       placeholder="Number of options"

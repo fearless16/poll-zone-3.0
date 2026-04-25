@@ -1,5 +1,5 @@
 import { Button, Container, Row, Col, Card, Badge, ListGroup } from 'react-bootstrap'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { useState } from 'react'
 import Charts from './Chart'
 import { closePoll } from '../Firebase/dbHandler'
@@ -30,14 +30,13 @@ function Result() {
       setModalOpen(true)
       return
     }
-    try {
-      await closePoll(roomId)
-      navigate('/create')
-    } catch {
+    const { error } = await closePoll(roomId)
+    if (error) {
       setSubmitted(false)
-    } finally {
-      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
+    } else {
+      navigate('/create')
     }
+    dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
   }
 
   return (

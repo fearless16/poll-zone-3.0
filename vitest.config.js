@@ -11,7 +11,6 @@ export default defineConfig({
       'node_modules',
       'src/main.jsx',
       'src/App.jsx',
-      'tests/setupTestDB.js',
       'eslint-rules/require-deps.js',
     ],
     coverage: {
