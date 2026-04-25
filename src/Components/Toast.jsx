@@ -31,37 +31,29 @@ function ToastComponent({ show, setShow, roomId }) {
 
   return (
     <div
-      className="position-fixed top-0 start-0 w-100 d-flex justify-content-center bounceIn"
-      style={{ zIndex: 1060, paddingTop: '1rem' }}
+      className="position-fixed top-0 start-50 translate-middle-x p-3 bounceIn"
+      style={{ zIndex: 1060 }}
     >
-      <Toast
-        show={show}
-        onClose={toggleShow}
-        animation
-        className="shadow-lg border-0"
-        style={{ minWidth: '22rem' }}
-      >
-        <Toast.Header className="border-0 pb-0">
-          <strong className="me-auto fs-6">Room Created!</strong>
+      <Toast show={show} onClose={toggleShow} animation>
+        <Toast.Header>
+          <strong className="me-auto">Room Created</strong>
         </Toast.Header>
         <Toast.Body>
-          <p className="text-muted mb-2" style={{ fontSize: '0.85rem' }}>
-            Share this ID with your team to join:
-          </p>
-          <div
-            className="d-flex align-items-center justify-content-between rounded px-3 py-2 mb-2"
-            style={{ backgroundColor: 'var(--background-color)' }}
-          >
-            <code className="fw-bold fs-5" style={{ color: 'var(--text-color)', letterSpacing: '0.05em' }}>
+          <div className="d-flex align-items-center justify-content-between gap-2">
+            <span
+              className="font-monospace text-truncate"
+              style={{ fontSize: '0.9rem', maxWidth: '14rem' }}
+              title={roomId}
+            >
               {roomId}
-            </code>
+            </span>
             <Button
               size="sm"
-              variant={copied ? 'success' : 'dark'}
+              variant={copied ? 'success' : 'outline-dark'}
               onClick={handleCopy}
-              style={{ minWidth: '4.5rem' }}
+              style={{ whiteSpace: 'nowrap' }}
             >
-              {copied ? '✓ Copied' : 'Copy'}
+              {copied ? 'Copied!' : 'Copy ID'}
             </Button>
           </div>
         </Toast.Body>

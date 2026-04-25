@@ -214,6 +214,16 @@ html[data-theme='dark'] .toast-body {
   border-color: var(--border-color) !important;
 }
 
+html[data-theme='dark'] .btn-outline-dark {
+  color: var(--text-color);
+  border-color: var(--muted-text);
+}
+
+html[data-theme='dark'] .btn-outline-dark:hover {
+  background-color: var(--muted-text);
+  color: var(--card-bg);
+}
+
 html[data-theme='dark'] .btn-close {
   filter: invert(1) grayscale(100%) brightness(200%);
 }
