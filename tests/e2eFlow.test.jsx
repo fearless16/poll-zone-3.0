@@ -156,7 +156,7 @@ describe('E2E Flow Tests', () => {
       )
 
       // Fill in the create form
-      const inputs = screen.getAllByPlaceholderText(/enter/i)
+      const inputs = screen.getAllByPlaceholderText(/name/i)
       const displayNameInput = inputs.find((i) => i.placeholder.match(/display name/i))
       const roomNameInput = inputs.find((i) => i.placeholder.match(/room name/i))
 
@@ -164,7 +164,7 @@ describe('E2E Flow Tests', () => {
       fireEvent.change(roomNameInput, { target: { value: 'Sprint Review' } })
 
       // Submit
-      const createBtn = screen.getByRole('button', { name: /create poll/i })
+      const createBtn = screen.getByRole('button', { name: /create room/i })
       fireEvent.click(createBtn)
 
       // Wait for toast
@@ -174,7 +174,7 @@ describe('E2E Flow Tests', () => {
 
       await waitFor(() => {
         expect(screen.getByText('ROOM-ABC')).toBeInTheDocument()
-        expect(screen.getByText(/room id/i)).toBeInTheDocument()
+        expect(screen.getByText('Room ID')).toBeInTheDocument()
       })
     })
 
@@ -189,7 +189,7 @@ describe('E2E Flow Tests', () => {
         </Routes>
       )
 
-      const inputs = screen.getAllByPlaceholderText(/enter/i)
+      const inputs = screen.getAllByPlaceholderText(/name/i)
       fireEvent.change(inputs.find((i) => i.placeholder.match(/display name/i)), {
         target: { value: 'Bob' },
       })
@@ -197,7 +197,7 @@ describe('E2E Flow Tests', () => {
         target: { value: 'Room' },
       })
 
-      fireEvent.click(screen.getByRole('button', { name: /create poll/i }))
+      fireEvent.click(screen.getByRole('button', { name: /create room/i }))
 
       await waitFor(() => {
         expect(screen.getByText('Firestore write failed')).toBeInTheDocument()
@@ -213,7 +213,7 @@ describe('E2E Flow Tests', () => {
         </Routes>
       )
 
-      const inputs = screen.getAllByPlaceholderText(/enter/i)
+      const inputs = screen.getAllByPlaceholderText(/name/i)
       fireEvent.change(inputs.find((i) => i.placeholder.match(/display name/i)), {
         target: { value: 'C' },
       })
@@ -221,7 +221,7 @@ describe('E2E Flow Tests', () => {
         target: { value: 'R' },
       })
 
-      fireEvent.click(screen.getByRole('button', { name: /create poll/i }))
+      fireEvent.click(screen.getByRole('button', { name: /create room/i }))
 
       await waitFor(() => {
         expect(screen.getByText('Something went wrong')).toBeInTheDocument()
@@ -279,16 +279,16 @@ describe('E2E Flow Tests', () => {
         </Routes>
       )
 
-      const inputs = screen.getAllByPlaceholderText(/enter/i)
-      const joinName = inputs.find((i) => i.placeholder === 'Enter display name' && i !== inputs[0])
+      const inputs = screen.getAllByPlaceholderText(/display name|room/i)
+      const joinName = inputs.find((i) => i.placeholder === 'Your display name' && i !== inputs[0])
       // Use the last display name input (join form) and room id input
-      const allDisplayNames = screen.getAllByPlaceholderText('Enter display name')
-      const allRoomIds = screen.getAllByPlaceholderText('Enter room id')
+      const allDisplayNames = screen.getAllByPlaceholderText('Your display name')
+      const allRoomIds = screen.getAllByPlaceholderText('Room ID')
 
       fireEvent.change(allDisplayNames[1], { target: { value: 'Bob' } })
       fireEvent.change(allRoomIds[0], { target: { value: 'ROOM-XYZ' } })
 
-      fireEvent.click(screen.getByRole('button', { name: /join poll/i }))
+      fireEvent.click(screen.getByRole('button', { name: /join room/i }))
 
       await waitFor(() => {
         expect(mockJoinPoll).toHaveBeenCalledWith('ROOM-XYZ', 'Bob')
@@ -310,13 +310,13 @@ describe('E2E Flow Tests', () => {
         </Routes>
       )
 
-      const allDisplayNames = screen.getAllByPlaceholderText('Enter display name')
-      const allRoomIds = screen.getAllByPlaceholderText('Enter room id')
+      const allDisplayNames = screen.getAllByPlaceholderText('Your display name')
+      const allRoomIds = screen.getAllByPlaceholderText('Room ID')
 
       fireEvent.change(allDisplayNames[1], { target: { value: 'Bob' } })
       fireEvent.change(allRoomIds[0], { target: { value: 'BAD-ROOM' } })
 
-      fireEvent.click(screen.getByRole('button', { name: /join poll/i }))
+      fireEvent.click(screen.getByRole('button', { name: /join room/i }))
 
       await waitFor(() => {
         expect(screen.getByText('Room does not exist')).toBeInTheDocument()
@@ -331,8 +331,8 @@ describe('E2E Flow Tests', () => {
       )
 
       // Clear the inputs (they may have required attribute, so submit via JS)
-      const allDisplayNames = screen.getAllByPlaceholderText('Enter display name')
-      const allRoomIds = screen.getAllByPlaceholderText('Enter room id')
+      const allDisplayNames = screen.getAllByPlaceholderText('Your display name')
+      const allRoomIds = screen.getAllByPlaceholderText('Room ID')
 
       // Force empty values and trigger submit
       fireEvent.change(allDisplayNames[1], { target: { value: '' } })
@@ -341,7 +341,7 @@ describe('E2E Flow Tests', () => {
       // The form has required fields, so the browser blocks submission.
       // But we can test the JS validation by calling handleJoinSubmit directly via form submit
       // Since the inputs are empty + required, the form won't submit — this tests native validation
-      const joinBtn = screen.getByRole('button', { name: /join poll/i })
+      const joinBtn = screen.getByRole('button', { name: /join room/i })
       expect(joinBtn).toBeInTheDocument()
     })
   })
@@ -987,13 +987,13 @@ describe('E2E Flow Tests', () => {
       )
 
       // Fill create form
-      const allNames = screen.getAllByPlaceholderText('Enter display name')
-      const roomName = screen.getByPlaceholderText('Enter room name')
+      const allNames = screen.getAllByPlaceholderText('Your display name')
+      const roomName = screen.getByPlaceholderText('Room name')
 
       fireEvent.change(allNames[0], { target: { value: 'Alice' } })
       fireEvent.change(roomName, { target: { value: 'Retro' } })
 
-      fireEvent.click(screen.getByRole('button', { name: /create poll/i }))
+      fireEvent.click(screen.getByRole('button', { name: /create room/i }))
 
       // Toast should appear
       await waitFor(() => {

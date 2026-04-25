@@ -3,7 +3,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: clamp(15rem, 50vw, 30rem);
-  padding: 1.5rem;
-  margin-right: 0.5rem;
+  width: clamp(14rem, 40vw, 26rem);
+  padding: 1rem;
+  margin: 0 auto;
 }

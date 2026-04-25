@@ -49,7 +49,7 @@ function Result() {
       )}
 
       {!pollState.loading && pollState.isPoll && !submitted && (
-        <main className={styles.resultWrapper}>
+        <main className={`${styles.resultWrapper} bounceIn`}>
           {modalOpen && (
             <Modals
               setModalOpen={setModalOpen}
@@ -74,12 +74,12 @@ function Result() {
                     </Col>
 
                     <Col xs={12} md={5}>
-                      <Card>
-                        <Card.Header className="fw-semibold text-center">Votes</Card.Header>
+                      <Card className="border-0" style={{ background: 'var(--card-bg)' }}>
+                        <Card.Header className="fw-semibold text-center" style={{ background: 'var(--border-color)', color: 'var(--text-color)' }}>Votes</Card.Header>
                         <Card.Body>
                           <ListGroup variant="flush">
                             {pollState.currentPollData.options.map((opt, idx) => (
-                              <ListGroup.Item key={idx} className="d-flex justify-content-between">
+                              <ListGroup.Item key={idx} className="d-flex justify-content-between" style={{ background: 'var(--card-bg)', color: 'var(--text-color)', borderColor: 'var(--border-color)' }}>
                                 <span>{opt.option}</span>
                                 <Badge
                                   bg="dark"
@@ -128,7 +128,7 @@ function Result() {
 
                     {!pollState.isOpen && (
                       <Row>
-                        <Col className="text-center text-muted">Poll has been closed</Col>
+                        <Col className="text-center" style={{ color: 'var(--muted-text)' }}>Poll has been closed</Col>
                       </Row>
                     )}
                   </Row>

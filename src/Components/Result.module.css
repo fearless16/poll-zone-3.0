@@ -5,18 +5,19 @@
 .resultWrapper {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   padding: 2rem;
   width: 100%;
-  max-width: 100%;
-  margin: auto;
+  max-width: 72rem;
+  margin: 0 auto;
 }
 
 .resultCardWrapper {
   background: var(--card-bg);
-  border-radius: var(--border-radius);
-  padding: 2rem;
-  box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.05);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
 }
 
 .chartBox {
@@ -26,6 +27,13 @@
   min-height: 250px;
   height: 100%;
   width: 100%;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-color);
 }
 
 @media (max-width: 767.98px) {
@@ -40,10 +48,4 @@
   .resultCardWrapper {
     padding: 1rem;
   }
-}
-
-/* Add spacing for rows that may wrap */
-.my-4.justify-content-center.g-3 {
-  gap: 1rem;
-  flex-wrap: wrap;
 }

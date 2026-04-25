@@ -7,7 +7,7 @@
 
 import { useState, useRef } from 'react'
 import { createRoom, joinPoll } from '../Firebase/dbHandler'
-import { Alert, Card, Button } from 'react-bootstrap'
+import { Alert, Button } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import Toast from './Toast'
 import styles from './Home.module.css'
@@ -104,58 +104,95 @@ function Home() {
 
   return (
     <div className={styles.homeWrapper}>
+      <h1 className={styles.heroTitle}>Welcome to Poll Zone</h1>
+      <p className={styles.heroSubtitle}>Create a room to start polling, or join an existing one</p>
+
       <div className={styles.formContainer}>
-        {error && <Alert variant="danger">{error}</Alert>}
+        {error && (
+          <Alert variant="danger" className="w-100" dismissible onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
 
-        <Card className={styles.formCard}>
-          <Card.Body>
-            <Card.Title>Create Poll Room</Card.Title>
+        <div className={styles.formCard}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Create Room</h2>
+            <p className={styles.cardSubtitle}>Start a new poll session as host</p>
+          </div>
+          <div className={styles.cardBody}>
             <form onSubmit={handleCreateSubmit}>
-              <input
-                ref={createNameRef}
-                type="text"
-                className="form-control mb-3"
-                placeholder="Enter display name"
-                required
-              />
-              <input
-                ref={roomNameRef}
-                type="text"
-                className="form-control mb-3"
-                placeholder="Enter room name"
-                required
-              />
-              <Button type="submit" variant="primary" className="w-100 mt-4" disabled={disabled}>
-                Create Poll
+              <div className="mb-3">
+                <input
+                  ref={createNameRef}
+                  type="text"
+                  className="form-control"
+                  placeholder="Your display name"
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <input
+                  ref={roomNameRef}
+                  type="text"
+                  className="form-control"
+                  placeholder="Room name"
+                  required
+                />
+              </div>
+              <Button type="submit" variant="primary" className="w-100 py-2" disabled={disabled}>
+                {disabled ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Room'
+                )}
               </Button>
             </form>
-          </Card.Body>
-        </Card>
+          </div>
+        </div>
 
-        <Card className={styles.formCard}>
-          <Card.Body>
-            <Card.Title>Join Poll Room</Card.Title>
+        <div className={styles.dividerText}>or</div>
+
+        <div className={styles.formCard}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Join Room</h2>
+            <p className={styles.cardSubtitle}>Enter a room ID to participate</p>
+          </div>
+          <div className={styles.cardBody}>
             <form onSubmit={handleJoinSubmit}>
-              <input
-                ref={joinNameRef}
-                type="text"
-                className="form-control mb-3"
-                placeholder="Enter display name"
-                required
-              />
-              <input
-                ref={idRef}
-                type="text"
-                className="form-control mb-3"
-                placeholder="Enter room id"
-                required
-              />
-              <Button type="submit" variant="secondary" className="w-100 mt-4" disabled={disabled}>
-                Join Poll
+              <div className="mb-3">
+                <input
+                  ref={joinNameRef}
+                  type="text"
+                  className="form-control"
+                  placeholder="Your display name"
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <input
+                  ref={idRef}
+                  type="text"
+                  className="form-control font-monospace"
+                  placeholder="Room ID"
+                  required
+                />
+              </div>
+              <Button type="submit" variant="dark" className="w-100 py-2" disabled={disabled}>
+                {disabled ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" />
+                    Joining...
+                  </>
+                ) : (
+                  'Join Room'
+                )}
               </Button>
             </form>
-          </Card.Body>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {show && <Toast show={show} setShow={setShow} roomId={roomId} />}

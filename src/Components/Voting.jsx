@@ -72,10 +72,10 @@ function Voting() {
     <>
       {/* {(pollState.loading || clicked) && <Loader />} */}
       {!pollState.loading && (
-        <Card className="border-2">
+        <Card className="border-0 shadow-none" style={{ background: 'transparent' }}>
           {' '}
-          <Card.Body>
-            <Card.Title className="fw-semibold mb-3">Create Question Poll</Card.Title>
+          <Card.Body className="px-0">
+            <Card.Title className="fw-semibold mb-3" style={{ color: 'var(--text-color)' }}>Create Question Poll</Card.Title>
 
             {error && <Alert variant="danger">{error}</Alert>}
 

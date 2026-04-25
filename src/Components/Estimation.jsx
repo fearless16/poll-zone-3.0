@@ -51,10 +51,10 @@ function Estimation() {
       )}
 
       {!pollState.loading && (
-        <Card className="">
-          <Card.Body>
-            <Card.Title className="fw-semibold mb-2">Create Estimation Poll</Card.Title>
-            <Card.Text className="text-muted mb-3">
+        <Card className="border-0 shadow-none" style={{ background: 'transparent' }}>
+          <Card.Body className="px-0">
+            <Card.Title className="fw-semibold mb-2" style={{ color: 'var(--text-color)' }}>Create Estimation Poll</Card.Title>
+            <Card.Text style={{ color: 'var(--muted-text)' }} className="mb-3">
               Enter a number between 2–8 to generate Fibonacci options
             </Card.Text>
             <Form onSubmit={handleSubmit}>

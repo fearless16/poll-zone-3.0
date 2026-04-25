@@ -3,32 +3,22 @@ import { Card } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 
 const NoPoll = ({ message }) => {
-  const classes = [
-    'mt-4',
-    'mb-5',
-    'shadow',
-    'rounded-3',
-    'd-flex',
-    'justify-content-center',
-    'align-items-center',
-    'voting-form',
-    'bounceIn',
-  ].join(' ')
-
   return (
-    <div className={classes}>
+    <div className="d-flex justify-content-center align-items-center mt-5 px-3 bounceIn">
       <Card
-        style={{ width: '40rem', height: '20rem' }}
-        className="d-flex justify-content-center align-items-center"
+        style={{ maxWidth: '36rem', width: '100%' }}
+        className="text-center shadow-sm border-0 py-5 px-4"
       >
-        <Card.Title className="text-center">
-          {message.message}
+        <Card.Body>
+          <Card.Title as="h5" className="mb-3 fw-semibold" style={{ color: 'var(--text-color)' }}>
+            {message.message}
+          </Card.Title>
           {message.path && (
-            <Link to={message.path} className="mx-2">
+            <Link to={message.path} className="btn btn-primary btn-sm mt-2">
               {message.linkMessage}
             </Link>
           )}
-        </Card.Title>
+        </Card.Body>
       </Card>
     </div>
   )

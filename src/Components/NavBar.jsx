@@ -1,21 +1,40 @@
+import { useState, useEffect } from 'react'
 import { Navbar, Nav, Container } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import { useRoomData } from '../Context/useRoomData'
 
 function NavigationBar() {
   const { pollState } = useRoomData()
+  const [dark, setDark] = useState(() => {
+    return localStorage.getItem('theme') === 'dark'
+  })
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+    localStorage.setItem('theme', dark ? 'dark' : 'light')
+  }, [dark])
 
   return (
     <Navbar bg="dark" variant="dark" expand="lg" sticky="top" className="py-3 shadow-sm">
       <Container>
-        <Navbar.Brand as={Link} to="/" className="fw-bold fs-4 text-uppercase text-light">
+        <Navbar.Brand as={Link} to="/" className="fw-bold text-uppercase text-light">
           Poll Zone 🔥
         </Navbar.Brand>
 
-        <Navbar.Toggle aria-controls="main-navbar" />
+        <div className="d-flex align-items-center order-lg-last ms-auto ms-lg-3 gap-2">
+          <button
+            className="theme-toggle"
+            onClick={() => setDark((d) => !d)}
+            aria-label="Toggle dark mode"
+            title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {dark ? '☀️' : '🌙'}
+          </button>
+          <Navbar.Toggle aria-controls="main-navbar" />
+        </div>
 
         <Navbar.Collapse id="main-navbar">
-          <Nav className="ms-auto gap-3">
+          <Nav className="ms-auto gap-2">
             {pollState.isHost && (
               <Nav.Link as={Link} to="/create" className="text-light fw-semibold">
                 Create
