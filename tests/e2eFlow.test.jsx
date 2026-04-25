@@ -178,7 +178,7 @@ describe('E2E Flow Tests', () => {
 
       await waitFor(() => {
         expect(screen.getByText('ROOM-ABC')).toBeInTheDocument()
-        expect(screen.getByText('Room ID')).toBeInTheDocument()
+        expect(screen.getByText('Room Created!')).toBeInTheDocument()
       })
     })
 

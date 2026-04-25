@@ -89,32 +89,31 @@ function VotingForm({ pollState, dispatch }) {
       {(clicked || pollState.loading) && <Loader />}
 
       {!clicked && pollState.currentPollData && (
-        <Form onSubmit={handleSubmit} className="p-4 bg-white shadow rounded-3 bounceIn mt-4">
-          <h5 className="text-center mb-4 fw-bold">{question || 'Estimation Poll'}</h5>
+        <Form onSubmit={handleSubmit} className="p-3 bg-white shadow rounded-3 bounceIn mt-4">
+          <h5 className="text-center mb-3 fw-bold">{question || 'Estimation Poll'}</h5>
           <Row>
-            <Col xs={12} className="d-flex flex-column gap-3">
+            <Col xs={12} className="d-flex flex-column gap-2">
               {options.map((option, idx) => (
                 <Form.Check
                   type="radio"
                   id={`option-${idx}`}
                   key={idx}
-                  label={<span className="fs-5">{option.option}</span>}
+                  label={<span>{option.option}</span>}
                   name="poll-options"
                   value={String(option.option)}
                   onChange={handleChange}
-                  className="py-2 px-3 rounded"
-                  style={{ transition: 'background-color 150ms ease' }}
+                  className="py-1 px-3 rounded"
                 />
               ))}
             </Col>
           </Row>
-          <Row className="mt-4">
+          <Row className="mt-3">
             <Col xs={12}>
               <Button
                 type="submit"
                 variant="dark"
                 disabled={clicked || !selected}
-                className="w-100 py-3 fs-5 rounded d-flex align-items-center justify-content-center"
+                className="w-100 py-2 rounded d-flex align-items-center justify-content-center"
               >
                 {clicked ? (
                   <>
