@@ -19,6 +19,8 @@ import { v4 as uuidv4 } from 'uuid'
  */
 export const createRoom = async (name, roomName) => {
   const hostId = uuidv4()
+  localStorage.setItem('id', hostId)
+  localStorage.setItem('displayName', name)
 
   const roomDetails = {
     participants: [{ id: hostId, name }],
@@ -31,11 +33,7 @@ export const createRoom = async (name, roomName) => {
   try {
     const res = await addDoc(collection(db, 'rooms'), roomDetails)
     const roomId = res.id
-    
-    localStorage.setItem('id', hostId)
-    localStorage.setItem('displayName', name)
     localStorage.setItem('roomId', roomId)
-
     return { response: { success: true, roomId } }
   } catch (error) {
     return { error }
@@ -57,10 +55,6 @@ export const joinPoll = async (roomId, name) => {
     if (!snap.exists()) return { error: new Error('Room does not exist') }
 
     const data = snap.data()
-    if (!data.participants || !Array.isArray(data.participants)) {
-      return { error: new Error('Invalid room data') }
-    }
-    
     if (id && data.participants.some((p) => p.id === id)) {
       return { response: { success: true, data: 'Already a room member' } }
     }
@@ -87,26 +81,15 @@ export const joinPoll = async (roomId, name) => {
  */
 export const addPoll = async (roomId, options, question = '') => {
   const docRef = doc(db, 'rooms', roomId)
-  const userId = localStorage.getItem('id')
-  
+  const poll = {
+    type: question ? 'voting' : 'estimation',
+    question,
+    options,
+    createdAt: Timestamp.now(),
+    voted: [],
+    isOpen: true,
+  }
   try {
-    const snap = await getDoc(docRef)
-    if (!snap.exists()) return { error: new Error('Room not found') }
-    
-    const roomData = snap.data()
-    if (roomData.host !== userId) {
-      return { error: new Error('Only host can create polls') }
-    }
-    
-    const poll = {
-      type: question ? 'voting' : 'estimation',
-      question,
-      options,
-      createdAt: Timestamp.now(),
-      voted: [],
-      isOpen: true,
-    }
-    
     await updateDoc(docRef, { poll })
     return { response: { success: true } }
   } catch (error) {
@@ -156,21 +139,12 @@ export const getRoomData = async (roomId) => {
  * @returns {Promise<boolean>}
  */
 export const isVoted = async () => {
-  try {
-    const roomId = localStorage.getItem('roomId')
-    const userId = localStorage.getItem('id')
-    
-    if (!roomId || !userId) return false
-    
-    const snap = await getDoc(doc(db, 'rooms', roomId))
-    if (!snap.exists()) return false
-    
-    const data = snap.data()
-    return data?.poll?.voted?.some((v) => v.id === userId) || false
-  } catch (error) {
-    console.error('Error checking vote status:', error)
-    return false
-  }
+  const roomId = localStorage.getItem('roomId')
+  const userId = localStorage.getItem('id')
+  const snap = await getDoc(doc(db, 'rooms', roomId))
+  const data = snap.data()
+
+  return data?.poll?.voted?.some((v) => v.id === userId) || false
 }
 
 /**
@@ -185,30 +159,20 @@ export const closePoll = async (roomId) => {
   if (!roomId) throw new Error('Room ID is required')
   if (!db) throw new Error('Firestore instance (db) is required')
 
-  const userId = localStorage.getItem('id')
-  const roomRef = doc(db, 'rooms', roomId)
+  const ref = doc(db, 'rooms', roomId)
+  const snap = await getDoc(ref)
 
-  await runTransaction(db, async (transaction) => {
-    const roomSnap = await transaction.get(roomRef)
-    
-    if (!roomSnap.exists()) {
-      throw new Error('Room does not exist')
-    }
-    
-    const room = roomSnap.data()
-    
-    if (room.host !== userId) {
-      throw new Error('Only host can close the poll')
-    }
+  if (!snap.exists()) {
+    throw new Error('Room does not exist')
+  }
+  const room = snap.data()
 
-    if (!room.poll || typeof room.poll !== 'object') {
-      throw new Error('Poll is missing or malformed')
-    }
-    
-    if (!room.poll.isOpen) return
+  if (!room.poll || typeof room.poll !== 'object') {
+    throw new Error('Poll is missing or malformed')
+  }
+  if (!room.poll.isOpen) return
 
-    transaction.update(roomRef, { 'poll.isOpen': false })
-  })
+  await updateDoc(ref, { 'poll.isOpen': false })
 }
 
 /**
@@ -232,10 +196,6 @@ export const castVote = async (roomId, optionIndex, userId, userName) => {
 
     const alreadyVoted = poll.voted.some((v) => v.id === userId)
     if (alreadyVoted) throw new Error('Already voted')
-    
-    if (!poll.options || optionIndex < 0 || optionIndex >= poll.options.length) {
-      throw new Error('Invalid option index')
-    }
 
     const updatedOptions = [...poll.options]
     updatedOptions[optionIndex].votes += 1

@@ -3,6 +3,7 @@ import { addPoll } from '../Firebase/dbHandler'
 import { useRoomData } from '../Context/useRoomData'
 import { Card, Button, Alert, Form, Row, Col } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
+import Loader from './Loader'
 import { REDUCER_ACTIONS } from '../Utils/constants'
 
 function Estimation() {
@@ -22,29 +23,16 @@ function Estimation() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setClicked(true)
-    
-    const roomId = localStorage.getItem('roomId')
-    if (!roomId) {
-      dispatch({ type: REDUCER_ACTIONS.FAILURE })
-      setClicked(false)
-      return
-    }
+    const fib = getFibValues(numberOfOptions)
 
-    const clamped = Math.max(2, Math.min(numberOfOptions, 8))
-    const fib = getFibValues(clamped)
-
-    const options = fib.slice(0, clamped).map((value) => ({
+    const options = fib.slice(0, numberOfOptions).map((value) => ({
       option: value,
       votes: 0,
     }))
 
     try {
-      const { error: pollError } = await addPoll(roomId, options)
-      if (pollError) {
-        dispatch({ type: REDUCER_ACTIONS.FAILURE })
-        setClicked(false)
-        return
-      }
+      const roomId = localStorage.getItem('roomId')
+      await addPoll(roomId, options)
       navigate('/poll')
     } catch (err) {
       dispatch({ type: REDUCER_ACTIONS.FAILURE })
@@ -54,6 +42,8 @@ function Estimation() {
 
   return (
     <>
+      {/* {(pollState.loading || clicked) && <Loader />} */}
+
       {!pollState.loading && pollState.error && (
         <Alert variant="danger" className="mt-3">
           {pollState.error}
@@ -74,7 +64,7 @@ function Estimation() {
                     <Form.Control
                       type="number"
                       value={numberOfOptions}
-                      onChange={(e) => setNumberOfOptions(parseInt(e.target.value) || 2)}
+                      onChange={(e) => setNumberOfOptions(e.target.value)}
                       min={2}
                       max={8}
                       placeholder="Number of options"

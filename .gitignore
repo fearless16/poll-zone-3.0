@@ -67,6 +67,7 @@ node_modules/
 .env
 
 .firebaserc
+firebase.json
 build
 .qodo
 

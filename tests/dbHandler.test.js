@@ -106,7 +106,8 @@ describe('🔥 dbHandler 100% test suite', () => {
     it('should handle room not found', async () => {
       getDoc.mockResolvedValueOnce(mockDocSnap(null, false))
       const result = await joinPoll('roomId', 'Bob')
-      expect(result).toEqual({ error: new Error('Room does not exist') })
+      expect(result.error).toBeInstanceOf(Error)
+      expect(result.error.message).toBe('Room does not exist')
     })
 
     it('should handle join error', async () => {
@@ -119,39 +120,18 @@ describe('🔥 dbHandler 100% test suite', () => {
 
   describe('addPoll', () => {
     it('should create a voting poll', async () => {
-      localStorageMock.getItem.mockImplementation((key) => (key === 'id' ? 'host123' : null))
-      getDoc.mockResolvedValueOnce(
-        mockDocSnap({
-          host: 'host123',
-          participants: [{ id: 'host123', name: 'Alice' }],
-        })
-      )
       updateDoc.mockResolvedValueOnce()
       const result = await addPoll('room1', [{ option: 'A', votes: 0 }], 'Q?')
       expect(result.response.success).toBe(true)
     })
 
     it('should create estimation poll', async () => {
-      localStorageMock.getItem.mockImplementation((key) => (key === 'id' ? 'host123' : null))
-      getDoc.mockResolvedValueOnce(
-        mockDocSnap({
-          host: 'host123',
-          participants: [{ id: 'host123', name: 'Alice' }],
-        })
-      )
       updateDoc.mockResolvedValueOnce()
       const result = await addPoll('room1', [{ option: '1', votes: 0 }])
       expect(result.response.success).toBe(true)
     })
 
     it('should handle poll creation error', async () => {
-      localStorageMock.getItem.mockImplementation((key) => (key === 'id' ? 'host123' : null))
-      getDoc.mockResolvedValueOnce(
-        mockDocSnap({
-          host: 'host123',
-          participants: [{ id: 'host123', name: 'Alice' }],
-        })
-      )
       const error = new Error('Poll error')
       updateDoc.mockRejectedValueOnce(error)
       const result = await addPoll('room1', [])
@@ -216,77 +196,25 @@ describe('🔥 dbHandler 100% test suite', () => {
 
   describe('closePoll', () => {
     it('should close poll if open', async () => {
-      localStorageMock.getItem.mockImplementation((key) => (key === 'id' ? 'host123' : null))
-      
-      runTransaction.mockImplementation(async (_, callback) => {
-        const transaction = {
-          get: vi.fn().mockResolvedValue(
-            mockDocSnap({
-              host: 'host123',
-              poll: { isOpen: true, options: [] },
-            })
-          ),
-          update: vi.fn(),
-        }
-        await callback(transaction)
-        return transaction
-      })
-      
+      getDoc.mockResolvedValueOnce(mockDocSnap({ poll: { isOpen: true } }))
+      updateDoc.mockResolvedValueOnce()
       await closePoll('room1')
-      expect(runTransaction).toHaveBeenCalled()
+      expect(updateDoc).toHaveBeenCalled()
     })
 
     it('should skip if poll already closed', async () => {
-      localStorageMock.getItem.mockImplementation((key) => (key === 'id' ? 'host123' : null))
-      
-      runTransaction.mockImplementation(async (_, callback) => {
-        const transaction = {
-          get: vi.fn().mockResolvedValue(
-            mockDocSnap({
-              host: 'host123',
-              poll: { isOpen: false, options: [] },
-            })
-          ),
-          update: vi.fn(),
-        }
-        await callback(transaction)
-        return transaction
-      })
-      
+      getDoc.mockResolvedValueOnce(mockDocSnap({ poll: { isOpen: false } }))
       await closePoll('room1')
-      expect(runTransaction).toHaveBeenCalled()
+      expect(updateDoc).not.toHaveBeenCalled()
     })
 
     it('should throw if room not found', async () => {
-      localStorageMock.getItem.mockImplementation((key) => (key === 'id' ? 'host123' : null))
-      
-      runTransaction.mockImplementation(async (_, callback) => {
-        const transaction = {
-          get: vi.fn().mockResolvedValue(mockDocSnap(null, false)),
-          update: vi.fn(),
-        }
-        await callback(transaction)
-      })
-      
+      getDoc.mockResolvedValueOnce(mockDocSnap(null, false))
       await expect(closePoll('room1')).rejects.toThrow('Room does not exist')
     })
 
     it('should throw if poll is malformed', async () => {
-      localStorageMock.getItem.mockImplementation((key) => (key === 'id' ? 'host123' : null))
-      
-      runTransaction.mockImplementation(async (_, callback) => {
-        const transaction = {
-          get: vi.fn().mockResolvedValue(
-            mockDocSnap({
-              host: 'host123',
-              poll: null,
-            }, true)
-          ),
-          update: vi.fn(),
-        }
-        await callback(transaction)
-      })
-      
+      getDoc.mockResolvedValueOnce(mockDocSnap({ poll: null }, true))
       await expect(closePoll('room1')).rejects.toThrow('Poll is missing or malformed')
     })
   })

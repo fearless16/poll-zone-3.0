@@ -32,7 +32,7 @@ const RoomDetailsCard = ({ room, isOpen }) => {
               Room name
             </Col>
             <Col xs={6} className="text-end">
-              {room.roomName}
+              {room.name}
             </Col>
           </Row>
         </ListGroup.Item>

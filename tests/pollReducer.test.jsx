@@ -33,11 +33,10 @@ describe('pollReducer', () => {
     }
   })
 
-  it('should always process snapshots regardless of lastUpdated order', () => {
+  it('should return same state if payload is older than current state', () => {
     const olderPayload = { ...payload, poll: { ...basePoll, lastUpdated: 9000 } }
     const result = pollReducer(baseState, { type: REDUCER_ACTIONS.SUCCESS, payload: olderPayload })
-    expect(result.currentPollData).toEqual(olderPayload.poll)
-    expect(result.loading).toBe(false)
+    expect(result).toEqual(baseState)
   })
 
   it('should handle SUCCESS with fresh poll data', () => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { castVote } from '../../Firebase/dbHandler'
 import { Button, Row, Col, Form, Spinner } from 'react-bootstrap'
 import Loader from '../Loader'
+import { REDUCER_ACTIONS } from '../../Utils/constants'
 
 /**
  * VotingForm component - handles voting flow inside a poll.
@@ -13,10 +14,10 @@ import Loader from '../Loader'
  */
 function VotingForm({ pollState, dispatch }) {
   const [question, setQuestion] = useState('')
+  const [, setType] = useState('')
   const [selected, setSelected] = useState('')
   const [clicked, setClicked] = useState(false)
   const [options, setOptions] = useState([])
-  const [error, setError] = useState('')
 
   /**
    * Handles vote submission.
@@ -25,38 +26,31 @@ function VotingForm({ pollState, dispatch }) {
    */
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (clicked) return
     setClicked(true)
+    dispatch({ type: REDUCER_ACTIONS.LOADING })
 
     try {
       const id = localStorage.getItem('id')
       const displayName = localStorage.getItem('displayName')
       const roomId = localStorage.getItem('roomId')
-      
-      if (!id || !displayName || !roomId) {
-        setError('Missing user information')
-        setClicked(false)
-        return
-      }
-      
-      if (!pollState?.currentPollData || !Array.isArray(options) || options.length === 0) {
-        setError('Invalid poll state')
-        setClicked(false)
-        return
-      }
-      
       const index = options.findIndex((opt) => opt.option.toString() === selected)
 
-      if (index === -1 || pollState.currentPollData.voted?.some((v) => v.id === id)) {
+      if (
+        index === -1 ||
+        !pollState?.currentPollData ||
+        pollState.currentPollData.voted.some((v) => v.id === id)
+      ) {
         setClicked(false)
+        dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
         return
       }
 
       await castVote(roomId, index, id, displayName)
     } catch (err) {
-      setError(err?.message || 'Failed to submit vote')
+      dispatch({ type: REDUCER_ACTIONS.FAILURE })
     } finally {
       setClicked(false)
+      dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
     }
   }
 
@@ -80,6 +74,7 @@ function VotingForm({ pollState, dispatch }) {
 
     const data = pollState.currentPollData
     setQuestion(data.question || '')
+    setType(data.question ? 'voting' : 'estimation')
     setOptions(data.options || [])
   }, [pollState.currentPollData])
 
@@ -91,15 +86,10 @@ function VotingForm({ pollState, dispatch }) {
   */
   return (
     <>
-      {clicked && <Loader />}
+      {(clicked || pollState.loading) && <Loader />}
 
       {!clicked && pollState.currentPollData && (
         <Form onSubmit={handleSubmit} className="p-4 bg-white shadow rounded-3 bounceIn mt-4">
-          {error && (
-            <div className="alert alert-danger text-center" role="alert">
-              {error}
-            </div>
-          )}
           <h5 className="text-center mb-4 fw-bold">{question || 'Estimation Poll'}</h5>
           <Row>
             <Col xs={12} className="d-flex flex-column gap-3">

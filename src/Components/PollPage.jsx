@@ -23,19 +23,19 @@ const PollPage = () => {
       }
     }
     return () => dispatch({ type: REDUCER_ACTIONS.UNSET_LOADING })
-  }, [roomId, userId, navigate, setRoomId, setUserId, dispatch])
+  }, [])
 
   useEffect(() => {
     if ((!roomId || !userId) && !pollState.loading) navigate('/')
-  }, [roomId, userId, pollState.loading, navigate])
+  }, [roomId, userId, pollState.loading])
 
   const renderPollState = () => {
     const { isHost, isPoll, isOpen, voted } = pollState
 
-    if (isOpen && voted) return <NoPoll message={Messages.VOTED} />
-    if (!isOpen && isPoll) return <NoPoll message={Messages.POLL_CLOSED} />
     if (isHost && !isPoll && !isOpen) return <NoPoll message={Messages.CREATE_POLL} />
     if (!isHost && !isPoll && !isOpen) return <NoPoll message={Messages.NO_ACTIVE_POLL} />
+    if (isOpen && voted) return <NoPoll message={Messages.VOTED} />
+    if (!isOpen && isPoll) return <NoPoll message={Messages.POLL_CLOSED} />
 
     if (isPoll && isOpen && !voted) {
       return <VotingForm pollState={pollState} dispatch={dispatch} />

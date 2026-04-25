@@ -13,8 +13,10 @@ const isHost = ({ host }, userId) => !!userId && host === userId
 
 export const pollReducer = (state, action) => {
   switch (action.type) {
-    case REDUCER_ACTIONS.SUCCESS: {
-      const voted = isVoted(action.payload?.poll || {}, action.payload.userId)
+    case REDUCER_ACTIONS.SUCCESS:
+      if (state.currentPollData?.lastUpdated > action.payload?.poll?.lastUpdated) {
+        return state
+      }
       return {
         ...state,
         loading: false,
@@ -23,10 +25,9 @@ export const pollReducer = (state, action) => {
         error: '',
         isHost: isHost(action.payload, action.payload.userId),
         isOpen: !!action.payload?.poll?.isOpen,
-        voted,
+        voted: isVoted(action.payload?.poll || {}, action.payload.userId),
         isPoll: isPoll(action.payload.poll),
       }
-    }
     case REDUCER_ACTIONS.OPEN:
       return { ...state, isOpen: true }
     case REDUCER_ACTIONS.LOADING:
