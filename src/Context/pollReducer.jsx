@@ -13,10 +13,17 @@ const isHost = ({ host }, userId) => !!userId && host === userId
 
 export const pollReducer = (state, action) => {
   switch (action.type) {
-    case REDUCER_ACTIONS.SUCCESS:
+    case REDUCER_ACTIONS.SUCCESS: {
       if (state.currentPollData?.lastUpdated > action.payload?.poll?.lastUpdated) {
         return state
       }
+      // Preserve optimistic voted=true if same poll (same createdAt).
+      // Reset to server truth when a new poll is created.
+      const samePoll =
+        state.currentPollData?.createdAt?.seconds === action.payload?.poll?.createdAt?.seconds
+      const serverVoted = isVoted(action.payload?.poll || {}, action.payload.userId)
+      const voted = serverVoted || (state.voted && samePoll)
+
       return {
         ...state,
         loading: false,
@@ -25,9 +32,10 @@ export const pollReducer = (state, action) => {
         error: '',
         isHost: isHost(action.payload, action.payload.userId),
         isOpen: !!action.payload?.poll?.isOpen,
-        voted: isVoted(action.payload?.poll || {}, action.payload.userId),
+        voted,
         isPoll: isPoll(action.payload.poll),
       }
+    }
     case REDUCER_ACTIONS.VOTED:
       return { ...state, loading: false, voted: true }
     case REDUCER_ACTIONS.OPEN:

@@ -93,4 +93,56 @@ describe('pollReducer', () => {
     const result = pollReducer(baseState, { type: 'UNKNOWN_ACTION' })
     expect(result).toEqual(baseState)
   })
+
+  it('should preserve optimistic voted=true when snapshot from another user arrives (same poll)', () => {
+    // State after optimistic VOTED dispatch
+    const stateAfterVote = {
+      ...baseState,
+      voted: true,
+      currentPollData: { ...basePoll, createdAt: { seconds: 5000 } },
+    }
+    // Snapshot from another user's vote — our userId NOT in voted array yet
+    const otherUserPayload = {
+      poll: {
+        ...basePoll,
+        voted: [{ id: 'user-321' }, { id: 'user-other' }],
+        createdAt: { seconds: 5000 },
+        lastUpdated: 10000,
+      },
+      host: 'host-1',
+      userId: mockUserId,
+    }
+    const result = pollReducer(stateAfterVote, {
+      type: REDUCER_ACTIONS.SUCCESS,
+      payload: otherUserPayload,
+    })
+    // voted stays true despite server not yet having our vote
+    expect(result.voted).toBe(true)
+  })
+
+  it('should reset voted to false when a new poll is created', () => {
+    // State: voted=true on old poll
+    const stateAfterVote = {
+      ...baseState,
+      voted: true,
+      currentPollData: { ...basePoll, createdAt: { seconds: 5000 } },
+    }
+    // New poll with different createdAt — user has not voted
+    const newPollPayload = {
+      poll: {
+        ...basePoll,
+        voted: [],
+        createdAt: { seconds: 9000 },
+        lastUpdated: 11000,
+      },
+      host: 'host-1',
+      userId: mockUserId,
+    }
+    const result = pollReducer(stateAfterVote, {
+      type: REDUCER_ACTIONS.SUCCESS,
+      payload: newPollPayload,
+    })
+    // voted resets to false for the new poll
+    expect(result.voted).toBe(false)
+  })
 })
