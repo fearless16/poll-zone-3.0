@@ -40,6 +40,8 @@ export const pollReducer = (state, action) => {
     }
     case REDUCER_ACTIONS.VOTED:
       return { ...state, loading: false, voted: true }
+    case REDUCER_ACTIONS.POLL_CREATED:
+      return { ...state, loading: false, voted: false, isPoll: true, isOpen: true }
     case REDUCER_ACTIONS.LOADING:
       return { ...state, loading: true }
     case REDUCER_ACTIONS.UNSET_LOADING:

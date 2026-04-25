@@ -234,8 +234,8 @@ html[data-theme='dark'] .shadow-lg {
 
 /* ─── Radio Button: Black instead of primary ────────────────── */
 .form-check-input:checked {
-  background-color: #212529;
-  border-color: #212529;
+  background-color: #212529 !important;
+  border-color: #212529 !important;
 }
 
 .form-check-input:focus {
@@ -244,8 +244,8 @@ html[data-theme='dark'] .shadow-lg {
 }
 
 html[data-theme='dark'] .form-check-input:checked {
-  background-color: #eaeaea;
-  border-color: #eaeaea;
+  background-color: #eaeaea !important;
+  border-color: #eaeaea !important;
 }
 
 html[data-theme='dark'] .form-check-input:checked[type='radio'] {

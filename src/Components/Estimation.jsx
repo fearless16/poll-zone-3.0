@@ -33,6 +33,7 @@ function Estimation() {
     try {
       const roomId = localStorage.getItem('roomId')
       await addPoll(roomId, options)
+      dispatch({ type: REDUCER_ACTIONS.POLL_CREATED })
       navigate('/poll')
     } catch (err) {
       dispatch({ type: REDUCER_ACTIONS.FAILURE })

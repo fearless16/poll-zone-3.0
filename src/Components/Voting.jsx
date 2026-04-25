@@ -60,6 +60,7 @@ function Voting() {
     try {
       const roomId = localStorage.getItem('roomId')
       await addPoll(roomId, options, question)
+      dispatch({ type: REDUCER_ACTIONS.POLL_CREATED })
       navigate('/poll')
     } catch {
       dispatch({ type: REDUCER_ACTIONS.FAILURE })
